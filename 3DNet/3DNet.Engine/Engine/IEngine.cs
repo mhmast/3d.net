@@ -1,12 +1,13 @@
-﻿using _3DNet.Engine.Scene;
+﻿using _3DNet.Engine.Rendering;
+using _3DNet.Engine.Scene;
 
 namespace _3DNet.Engine.Engine
 {
-    internal interface IEngine
+    public interface IEngine
     {
         void Start(IScene scene);
         void Stop();
 
-        IScene CreateScene();
+        IScene CreateScene(IRenderTarget sceneTarget);
     }
 }

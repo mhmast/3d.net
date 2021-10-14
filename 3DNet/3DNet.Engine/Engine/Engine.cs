@@ -13,8 +13,8 @@ namespace _3DNet.Engine.Engine
             _renderEngine = renderEngine;
         }
 
-        public IScene CreateScene()
-        => new Scene.Scene();
+        public IScene CreateScene(IRenderTarget target)
+        => new Scene.Scene(target);
 
         public void Start(IScene scene)
         {
@@ -22,6 +22,7 @@ namespace _3DNet.Engine.Engine
             {
                 return;
             }
+            _running = true;
             while(_running)
             {
                 scene.Update();

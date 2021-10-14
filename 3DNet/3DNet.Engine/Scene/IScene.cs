@@ -1,4 +1,5 @@
 ﻿using _3DNet.Engine.Rendering;
+using _3DNet.Engine.Rendering.Model;
 
 namespace _3DNet.Engine.Scene
 {

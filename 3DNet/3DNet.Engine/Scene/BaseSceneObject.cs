@@ -1,5 +1,5 @@
 ﻿using _3DNet.Engine.Rendering;
-using System.Numerics;
+using _3DNet.Math;
 
 namespace _3DNet.Engine.Scene
 {

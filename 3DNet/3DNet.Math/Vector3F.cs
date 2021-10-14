@@ -24,5 +24,10 @@ namespace _3DNet.Math
 
         public override int Cols => 1;
 
+        public static implicit operator Vector3F((float, float, float) vals)
+        {
+            return new Vector3F(new[] { vals.Item1,vals.Item2,vals.Item3});
+        }
+
     }
 }
