@@ -1,10 +1,9 @@
 ﻿using _3DNet.Engine.Rendering;
 using _3DNet.Engine.Rendering.Model;
-using _3DNet.Math;
 
 namespace _3DNet.Engine.Scene
 {
-    class StandardSceneObject : BaseSceneObject
+    class StandardSceneObject : BaseSceneObject 
     {
 
         private readonly IModel _model;
@@ -14,9 +13,9 @@ namespace _3DNet.Engine.Scene
             _model = model;
         }
 
-        protected override void RenderInternal(IRenderEngine engine)
-        { 
-            _model.Draw(engine);
+        public override void Render(IRenderEngine engine)
+        {
+            _model.Render(engine);
         }
     }
 }

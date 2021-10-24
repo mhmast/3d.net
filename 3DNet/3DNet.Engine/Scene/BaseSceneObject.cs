@@ -5,7 +5,11 @@ namespace _3DNet.Engine.Scene
 {
     internal abstract class BaseSceneObject : ISceneObject
     {
-        
+        public BaseSceneObject(IScene scene, string name) : this(scene)
+        {
+            Name = name;
+        }
+
         protected BaseSceneObject(IScene scene)
         {
             Scene = scene;
@@ -13,14 +17,8 @@ namespace _3DNet.Engine.Scene
 
         public IScene Scene { get; }
         public Matrix4x4 World { get; private set; }
+        public string Name { get; }
 
-        public void Render(IRenderEngine engine)
-        {
-            engine.SetWorld(World);
-            RenderInternal(engine);
-        }
-
-        protected abstract void RenderInternal(IRenderEngine engine);
-
+        public abstract void Render(IRenderEngine engine);
     }
 }

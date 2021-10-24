@@ -1,5 +1,5 @@
 ﻿
-namespace _3DNet.Rendering.D3D11
+namespace _3DNet.Rendering.D3D12
 {
     partial class D3DRenderForm
     {

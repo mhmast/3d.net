@@ -1,6 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using _3DNet.Engine.Extensions;
-using _3DNet.Rendering.D3D11.Extensions;
+using _3DNet.Rendering.D3D12.Extensions;
 
 namespace _3DNet.Console
 {
@@ -10,7 +10,7 @@ namespace _3DNet.Console
         {
             var services = new ServiceCollection()
                 .Use3DNet()
-                .UseDirectX11()
+                .UseDirectX12()
                 .AddTransient<Game>()
                 .BuildServiceProvider();
             var game = services.GetRequiredService<Game>();

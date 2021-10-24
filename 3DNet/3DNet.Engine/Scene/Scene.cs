@@ -8,7 +8,9 @@ namespace _3DNet.Engine.Scene
     internal class Scene : IScene
     {
         private readonly List<ISceneObject> _createdObjects = new();
-        private IRenderTarget _target;
+        private readonly IRenderTarget _target;
+
+        public ICamera ActiveCamera { get; set; }
 
         public Scene(IRenderTarget target)
         {
@@ -25,6 +27,7 @@ namespace _3DNet.Engine.Scene
         public void Render(IRenderEngine renderEngine)
         {
             _target.Clear(Color.Red);
+            renderEngine.SetProjection(_target.Projection);
             foreach(var obj in _createdObjects)
             {
                 obj.Render(renderEngine);
@@ -35,6 +38,14 @@ namespace _3DNet.Engine.Scene
         public void Update()
         {
             
+        }
+
+        public ICamera CreateStandardCamera(string name)
+        {
+            var obj = new StandardCamera(this,name);
+            _createdObjects.Add(obj);
+            ActiveCamera = ActiveCamera ?? obj;
+            return obj;
         }
     }
 }

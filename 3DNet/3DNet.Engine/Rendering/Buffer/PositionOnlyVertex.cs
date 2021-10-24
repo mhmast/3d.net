@@ -2,7 +2,7 @@
 
 namespace _3DNet.Engine.Rendering.Buffer
 {
-    internal class PositionOnlyVertex : IVertex
+    public struct PositionOnlyVertex 
     {
         Vector3F Position { get; }
 

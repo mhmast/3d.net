@@ -1,4 +1,5 @@
-﻿using static System.Math;
+﻿using System;
+using static System.Math;
 
 namespace _3DNet.Math
 {
@@ -20,5 +21,19 @@ namespace _3DNet.Math
 
         public override int Cols => 4;
 
+        public static Matrix4x4 PerspectiveFovLH(float fovY, float aspectRatio, float zn, float zf)
+        {
+            var yScale = Cot(fovY / 2);
+            var xScale = yScale / aspectRatio;
+            return new Matrix4x4(
+                (xScale, 0, 0, 0),
+                (0, yScale, 0, 0),
+                (0, 0, zf / (zf - zn), 1),
+                (0, 0, -zn * zf / (zf - zn), 0)
+            );
+        }
+
+        private static float Cot(float v)
+        => 1f / (float)Tan(v);
     }
 }

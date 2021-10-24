@@ -8,6 +8,7 @@ namespace _3DNet.Engine.Scene
         void Update();
 
         ISceneObject CreateStandardObject(IModel model);
+        ICamera CreateStandardCamera(string name);
         void Render(IRenderEngine renderEngine);
     }
 }

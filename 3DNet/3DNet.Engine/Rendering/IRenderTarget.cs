@@ -1,18 +1,13 @@
-﻿using System;
+﻿using _3DNet.Math;
 using System.Drawing;
 
 namespace _3DNet.Engine.Rendering
 {
     public interface IRenderTarget
     {
-        int Height { get; }
-        int Width { get; }
+        Matrix4x4 Projection { get; }
+        void SetAsTarget();
         void Clear(Color clearColor);
         void Present();
-    }
-
-    public interface IRenderWindow : IRenderTarget
-    {
-        void Show();
     }
 }

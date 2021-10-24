@@ -1,7 +1,10 @@
-﻿namespace _3DNet.Engine.Rendering.Model
+﻿using _3DNet.Engine.Rendering.Shader;
+
+namespace _3DNet.Engine.Rendering.Model
 {
     public interface IModel
     {
-        void Draw(IRenderEngine engine);
+        IShader Shader { get;  }
+        void Render(IRenderEngine engine);
     }
 }

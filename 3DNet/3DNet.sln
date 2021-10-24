@@ -9,7 +9,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "3DNet.Engine", "3DNet.Engin
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "3DNet.Math", "3DNet.Math\3DNet.Math.csproj", "{AF6B9D84-0DFC-4E63-93EB-C9AFFB039343}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "3DNet.Rendering.D3D11", "3DNet.Rendering.D3D11\3DNet.Rendering.D3D11.csproj", "{BDE11FCC-9863-4887-A8C1-D966DDB7ECEB}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "3DNet.Rendering.D3D12", "3DNet.Rendering.D3D11\3DNet.Rendering.D3D12.csproj", "{BDE11FCC-9863-4887-A8C1-D966DDB7ECEB}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

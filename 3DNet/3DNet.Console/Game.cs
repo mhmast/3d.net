@@ -29,6 +29,7 @@ namespace _3DNet.Console
         public void Init()
         {
             _renderWindow = _renderTargetFactory.CreateWindow(new System.Drawing.Size(100, 100), "Main");
+            _renderWindow.OnClosed += _engine.Stop;
             _scene = _engine.CreateScene(_renderWindow);
             _scene.CreateStandardObject(_modelFactory.CreateCube(10, 10, 10));
         }

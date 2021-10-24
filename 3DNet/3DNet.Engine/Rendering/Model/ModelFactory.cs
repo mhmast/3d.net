@@ -2,15 +2,18 @@
 
 namespace _3DNet.Engine.Rendering.Model
 {
-    class ModelFactory : IModelFactory
+    public abstract class ModelFactory : IModelFactory
     {
-        public IModel CreateCube(float width, float height, float depth)
-        {
-            var vertexBuffer = new VertexBuffer<PositionOnlyVertex> {
-            (-width/2,height/2,-depth-2) , (width/2,height/2,-depth-2),(-width/2,-height/2,-depth-2) , (width/2,-height/2,-depth-2),
-            (-width/2,height/2,depth-2) , (width/2,height/2,depth-2),(-width/2,-height/2,depth-2) , (width/2,-height/2,depth-2)
+    
+        protected PositionOnlyVertex[] CreateCubeVertices(float width, float height, float depth)
+        => new PositionOnlyVertex[]
+            {
+                (-width/2,height/2,-depth-2) , (width/2,height/2,-depth-2),(-width/2,-height/2,-depth-2) , (width/2,-height/2,-depth-2),
+                (-width/2,height/2,depth-2) , (width/2,height/2,depth-2),(-width/2,-height/2,depth-2) , (width/2,-height/2,depth-2)
             };
-            var indexBuffer = new IndexBuffer
+        
+        protected int[] CreateCubeIndices()
+        => new []
             {
                 //front
                 0,1,2,0,2,3,
@@ -25,7 +28,6 @@ namespace _3DNet.Engine.Rendering.Model
                 //bottom
                 2,6,7,2,6,3
             };
-            return new SimpleModel(vertexBuffer, indexBuffer);
-        }
+        public abstract IModel CreateCube(float width, float height, float depth);
     }
 }

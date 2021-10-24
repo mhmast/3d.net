@@ -16,8 +16,10 @@
         public float U => this[4, 1];
 
         public override int Rows => 4;
-
         public override int Cols => 1;
+
+        public static implicit operator Vector4F((float,float,float,float) input)
+        => new Vector4F(new[] {input.Item1,input.Item2, input.Item3, input.Item4 });
 
     }
 }

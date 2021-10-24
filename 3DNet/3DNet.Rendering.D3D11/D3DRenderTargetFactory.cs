@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 
-namespace _3DNet.Rendering.D3D11
+namespace _3DNet.Rendering.D3D12
 {
     internal class D3DRenderTargetFactory : IRenderTargetFactory
     {
@@ -20,7 +20,7 @@ namespace _3DNet.Rendering.D3D11
             {
                 throw new ArgumentException($"There is already a rendertarget with the name {name}");
             }
-            var form = new D3DRenderForm(_engine.Device, name, fullScreen) { Size = size };
+            var form = _engine.CreateRenderForm(name, fullScreen, size);
             _createdTargets.Add(name, form);
             form.Show();
             return form;
