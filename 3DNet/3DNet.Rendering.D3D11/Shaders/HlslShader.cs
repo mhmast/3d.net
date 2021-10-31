@@ -50,7 +50,7 @@ namespace _3DNet.Rendering.D3D12.Shaders
                 RootSignature = rootSignature,
                 VertexShader = LoadShaderByteCode(_shaderDescription.ShaderFile, _shaderDescription.VertexShaderMethod, _shaderDescription.VertexShaderProfile),
                 PixelShader = LoadShaderByteCode(_shaderDescription.ShaderFile, _shaderDescription.PixelShaderMethod, _shaderDescription.PixelShaderProfile),
-                RasterizerState = RasterizerStateDescription.Default(),
+                RasterizerState = new RasterizerStateDescription { CullMode = CullMode.None,FillMode = FillMode.Solid},
                 BlendState = BlendStateDescription.Default(),
                 DepthStencilFormat = Format.D32_Float,
                 DepthStencilState = new DepthStencilStateDescription() { IsDepthEnabled = false, IsStencilEnabled = false },

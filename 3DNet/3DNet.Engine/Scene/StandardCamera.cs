@@ -6,24 +6,15 @@ namespace _3DNet.Engine.Scene
 {
     internal class StandardCamera : BaseSceneObject, ICamera
     {
-        private Vector3F _up = (0, 1, 0);
-        private Vector3F _zaxis;
-        private Vector3F _xaxis;
-        private Vector3F _yaxis;
         private Matrix4x4 _view;
 
         public StandardCamera(Scene scene, string name) : base(scene, name)
         {
         }
 
-        public void LookAt(ISceneObject obj)
-        {
-            _zaxis = (Position - obj.Position).Normalize();// The "forward" vector.
-            _xaxis = _up.Cross(_zaxis).Normalize();// The "right" vector.
-            _yaxis = _zaxis.Cross(_xaxis);     // The "up" vector.
-            ReCalculateviewMatrix();
-            }
+        protected override void OnRotationChanged() => ReCalculateviewMatrix();
 
+        protected override void OnTranslationChanged() => ReCalculateviewMatrix();
         private void ReCalculateviewMatrix()
         {
 
@@ -31,9 +22,9 @@ namespace _3DNet.Engine.Scene
             // This is transposed which is equivalent to performing an inverse 
             // if the matrix is orthonormalized (in this case, it is).
             var orientation = new Matrix4x4(
-               (_xaxis.X, _yaxis.X, _zaxis.X, 0),
-               (_xaxis.Y, _yaxis.Y, _zaxis.Y, 0),
-               (_xaxis.Z, _yaxis.Z, _zaxis.Z, 0),
+               (Right.X, Up.X, Forward.X, 0),
+               (Right.Y, Up.Y, Forward.Y, 0),
+               (Right.Z, Up.Z, Forward.Z, 0),
                (0, 0, 0, 1));
 
             // Create a 4x4 translation matrix.
@@ -53,12 +44,13 @@ namespace _3DNet.Engine.Scene
             // are already inverted.
 
 
-            _view = (orientation * translation);
+            _view = orientation * translation;
         }
 
         public override void Render(IRenderEngine engine)
         {
             engine.SetView(_view);
         }
+
     }
 }

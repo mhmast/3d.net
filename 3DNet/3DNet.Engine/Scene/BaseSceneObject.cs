@@ -26,16 +26,21 @@ namespace _3DNet.Engine.Scene
 
         private void ReCalculateRotation()
         {
-            _up = ((0, 1, 0, 0) * _rotationQuat).ToVector3F().Normalize();
-            _forward = ((0, 0, 1, 0) * _rotationQuat).ToVector3F().Normalize();
-            _right = ((1, 0, 0, 0) * _rotationQuat).ToVector3F().Normalize();
             _rotation = _rotationQuat.ToMatrix4x4();
+            OnRotationChanged();
+            ReCalculateWorld();
         }
+
+        protected virtual void OnRotationChanged() { }
 
         private void ReCalculateScale()
         {
             _scale = Matrix4x4.Scale((1, 1, 1));
+            OnScaleChanged();
+            ReCalculateWorld();
         }
+
+        protected virtual void OnScaleChanged() { }
 
         public IScene Scene { get; }
         public Matrix4x4 World { get; private set; }
@@ -52,8 +57,11 @@ namespace _3DNet.Engine.Scene
         private void ReCalculateTranslation()
         {
             _translation = Matrix4x4.Translate(_position);
+            OnTranslationChanged();
             ReCalculateWorld();
         }
+
+        protected virtual void OnTranslationChanged() { }
 
         private void ReCalculateWorld()
         {
@@ -74,9 +82,22 @@ namespace _3DNet.Engine.Scene
             ReCalculateTranslation();
         }
 
+        public void LookAt(ISceneObject obj)
+        {
+            _forward = (Position - obj.Position).Normalize();
+            _right = _up.Cross(_forward).Normalize();
+            _up = _forward.Cross(_right);
+            _rotationQuat = Quaternion.CreateFromAxisAngle(_forward, 0) + Quaternion.CreateFromAxisAngle(_right, 0) + Quaternion.CreateFromAxisAngle(_up, 0);
+            ReCalculateRotation();
+        }
+
+
         public void Rotate(Vector3F axis, float angle)
         {
             _rotationQuat += Quaternion.CreateFromAxisAngle(axis, angle);
+            _up = ((0, 1, 0, 0) * _rotationQuat).ToVector3F().Normalize();
+            _forward = ((0, 0, 1, 0) * _rotationQuat).ToVector3F().Normalize();
+            _right = ((1, 0, 0, 0) * _rotationQuat).ToVector3F().Normalize();
             ReCalculateRotation();
         }
     }
