@@ -7,7 +7,7 @@ namespace _3DNet.Engine.Scene
     {
 
         private readonly IModel _model;
-        public StandardSceneObject(IScene scene, IModel model) : base(scene)
+        public StandardSceneObject(IScene scene,string name, IModel model) : base(scene,name)
         {
             
             _model = model;

@@ -8,10 +8,11 @@ namespace _3DNet.Engine.Scene
     {
         void Update();
 
-        ISceneObject CreateStandardObject(IModel model);
+        ISceneObject CreateStandardObject(string name,IModel model);
         ICamera CreateStandardCamera(string name);
         void RenderOn(IRenderTarget renderTarget, IRenderEngine renderEngine);
         public Color BackgroundColor { get; set; }
 
+        void SetActiveCamera(ICamera cam);
     }
 }

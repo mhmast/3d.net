@@ -1,8 +1,4 @@
 ﻿using static System.Math;
-using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.Linq;
 
 namespace _3DNet.Math
 {
@@ -13,6 +9,9 @@ namespace _3DNet.Math
         }
 
         public Matrix2x2(float[] data) : base(data)
+        {
+        }
+        public Matrix2x2(float[][] data) : base(data)
         {
         }
 

@@ -1,5 +1,6 @@
 ﻿using _3DNet.Engine.Rendering;
 using _3DNet.Engine.Rendering.Model;
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 
@@ -7,27 +8,32 @@ namespace _3DNet.Engine.Scene
 {
     internal class Scene : IScene
     {
-        private readonly List<ISceneObject> _createdObjects = new();
-        private string name;
+        private readonly Dictionary<string,ISceneObject> _createdObjects = new();
+        private StandardCamera _activeCamera;
+
+        private string Name { get; }
 
         public Scene(string name)
         {
-            this.name = name;
+            Name = name;
         }
 
-        public Scene()
-        {
-        }
-
-        public ICamera ActiveCamera { get; set; }
+      
         public Color BackgroundColor { get; set; }
 
-
-
-        public ISceneObject CreateStandardObject(IModel model)
+        private void CheckSceneObjectOrThrow(string name)
         {
-            var obj = new StandardSceneObject(this, model);
-            _createdObjects.Add(obj);
+            if (_createdObjects.ContainsKey(name))
+            {
+                throw new Exception($"Scene object with name {name} already exists");
+            }
+        }
+
+        public ISceneObject CreateStandardObject(string name,IModel model)
+        {
+            CheckSceneObjectOrThrow(name);
+            var obj = new StandardSceneObject(this,name, model);
+            _createdObjects.Add(name,obj);
             return obj;
         }
 
@@ -39,7 +45,7 @@ namespace _3DNet.Engine.Scene
             {
                 return;
             }
-            foreach (var obj in _createdObjects)
+            foreach (var obj in _createdObjects.Values)
             {
                 obj.Render(renderEngine);
             }
@@ -54,11 +60,14 @@ namespace _3DNet.Engine.Scene
         public ICamera CreateStandardCamera(string name)
         {
             var obj = new StandardCamera(this, name);
-            _createdObjects.Add(obj);
-            ActiveCamera = ActiveCamera ?? obj;
+            _createdObjects.Add(name,obj);
+            _activeCamera = _activeCamera ?? obj;
             return obj;
         }
 
-
+        public void SetActiveCamera(ICamera cam)
+        {
+            _activeCamera = _createdObjects[cam.Name] as StandardCamera;
+        }
     }
 }

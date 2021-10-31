@@ -2,12 +2,7 @@
 using _3DNet.Engine.Rendering;
 using _3DNet.Engine.Rendering.Model;
 using _3DNet.Engine.Scene;
-using System;
-using System.Collections.Generic;
 using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace _3DNet.Console
 {
@@ -29,13 +24,18 @@ namespace _3DNet.Console
 
         public void Init()
         {
-            _renderWindow = _renderTargetFactory.CreateWindow(new Size(100, 100), "Main");
+            _renderWindow = _renderTargetFactory.CreateWindow(new Size(1000, 1000), "Main");
             _renderWindow.OnClosed += _engine.Stop;
             _scene = _engine.GetOrCreateScene("default");
             _scene.BackgroundColor = Color.Red;
             _engine.SetActiveRenderTarget(_renderWindow);
             _engine.SetActiveScene(_scene);
-            _scene.CreateStandardObject(_modelFactory.CreateCube(10, 10, 10));
+            var cube = _scene.CreateStandardObject("cube",_modelFactory.CreateCube(10, 10, 10));
+            cube.MoveTo((0, 0, 20));
+            var cam = _scene.CreateStandardCamera("defaultcam");
+            _scene.SetActiveCamera(cam);
+            cam.MoveTo((0, 0, 0));
+            cam.LookAt(cube);
         }
 
         public void Start()

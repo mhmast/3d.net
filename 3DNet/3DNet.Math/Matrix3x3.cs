@@ -11,6 +11,9 @@ namespace _3DNet.Math
         public Matrix3x3(float[] data) : base(data)
         {
         }
+        public Matrix3x3(float[][] data) : base(data)
+        {
+        }
 
         public override int Rows => 3;
 

@@ -17,7 +17,7 @@ namespace _3DNet.Math
 
         public MatrixBase(params TVector[] rows)
         {
-            _data = rows.SelectMany(r => r._data).ToArray();
+            _data = rows.Select(r => r._data.Select(d=>d[0]).ToArray()).ToArray();
         }
 
         public abstract int Rows { get;  }
@@ -53,7 +53,7 @@ namespace _3DNet.Math
             _data = FormatData(data);
         }
 
-        private MatrixBase(float[][] data)
+        protected MatrixBase(float[][] data)
         {
 
             if (data != null)
