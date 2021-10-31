@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "3DNet.Console": {
+      "commandName": "Project",
+      "nativeDebugging": true
+    }
+  }
+}

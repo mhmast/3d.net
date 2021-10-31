@@ -3,5 +3,6 @@
     public interface IShaderFactory
     {
         IShader DefaultShader { get; }
+        IShader LoadShader(string name,ShaderDescription description);
     }
 }

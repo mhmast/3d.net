@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "3DNet.Rendering.D3D12": {
+      "commandName": "Project",
+      "nativeDebugging": true
+    }
+  }
+}

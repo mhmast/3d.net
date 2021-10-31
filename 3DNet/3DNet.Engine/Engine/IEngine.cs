@@ -5,9 +5,10 @@ namespace _3DNet.Engine.Engine
 {
     public interface IEngine
     {
-        void Start(IScene scene);
+        void Start();
         void Stop();
-
-        IScene CreateScene(IRenderTarget sceneTarget);
+        void SetActiveRenderTarget(IRenderTarget renderTarget);
+        IScene GetOrCreateScene(string name);
+        void SetActiveScene(IScene scene);
     }
 }

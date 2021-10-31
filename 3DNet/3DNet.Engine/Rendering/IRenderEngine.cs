@@ -7,7 +7,7 @@ namespace _3DNet.Engine.Rendering
     {
         void Initialize();
         void SetWorld(Matrix4x4 world);
-        void BeginScene(IRenderTarget target,Color clearColor);
+        bool BeginScene(IRenderTarget target,Color clearColor);
         void EndScene(IRenderTarget target);
         void SetView(Matrix4x4 view);
         void SetProjection(Matrix4x4 projection);

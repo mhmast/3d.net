@@ -6,7 +6,8 @@ namespace _3DNet.Engine.Rendering
     public interface IRenderTarget
     {
         Matrix4x4 Projection { get; }
-        void SetAsTarget();
+        bool IsDisposed { get; }
+
         void Clear(Color clearColor);
         void Present();
     }

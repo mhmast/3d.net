@@ -15,6 +15,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Shaders\default.hlsl" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="SharpDX.D3DCompiler" Version="4.2.0" />
     <PackageReference Include="SharpDX.Direct3D12" Version="4.2.0" />
   </ItemGroup>
@@ -24,7 +28,13 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Update="D3DRenderForm.cs">
+    <Content Include="Shaders\default.hlsl">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="RenderTargets\D3DRenderForm.cs">
       <SubType>Form</SubType>
     </Compile>
   </ItemGroup>

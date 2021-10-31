@@ -1,5 +1,6 @@
 ﻿using _3DNet.Engine.Rendering;
 using _3DNet.Engine.Rendering.Model;
+using System.Drawing;
 
 namespace _3DNet.Engine.Scene
 {
@@ -9,6 +10,8 @@ namespace _3DNet.Engine.Scene
 
         ISceneObject CreateStandardObject(IModel model);
         ICamera CreateStandardCamera(string name);
-        void Render(IRenderEngine renderEngine);
+        void RenderOn(IRenderTarget renderTarget, IRenderEngine renderEngine);
+        public Color BackgroundColor { get; set; }
+
     }
 }
