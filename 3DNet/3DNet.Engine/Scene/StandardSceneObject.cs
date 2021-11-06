@@ -13,9 +13,9 @@ namespace _3DNet.Engine.Scene
             _model = model;
         }
 
-        public override void Render(IRenderEngine engine)
+        public override void Render(IRenderWindowContext context)
         {
-            _model.Render(engine);
+            _model.Render(context);
         }
     }
 }

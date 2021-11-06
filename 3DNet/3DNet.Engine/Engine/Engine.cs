@@ -8,7 +8,7 @@ namespace _3DNet.Engine.Engine
     {
         readonly IRenderEngine _renderEngine;
         private bool _running = false;
-        private IRenderTarget _renderTarget;
+        private IRenderWindowContext _context;
         private IScene _activeScene;
         private Dictionary<string, Scene.Scene> _scenes = new();
         public Engine(IRenderEngine renderEngine)
@@ -16,7 +16,7 @@ namespace _3DNet.Engine.Engine
             _renderEngine = renderEngine;
         }
 
-        public void SetActiveRenderTarget(IRenderTarget renderTarget) => _renderTarget = renderTarget;
+        public void SetActiveContext(IRenderWindowContext context) => _context = context;
 
         public IScene GetOrCreateScene(string name)
         {
@@ -40,9 +40,10 @@ namespace _3DNet.Engine.Engine
                 {
                     scene.Update();
                 }
-                if (!_renderTarget.IsDisposed)
+                if (!_context.IsDisposed)
                 {
-                    _activeScene.RenderOn(_renderTarget, _renderEngine);
+                    
+                    _activeScene.Render(_context);
                 }
             }
         }

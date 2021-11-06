@@ -1,10 +1,10 @@
-﻿using SharpDX.Direct3D12;
+﻿using _3DNet.Engine.Rendering;
 using System;
 
 namespace _3DNet.Rendering.D3D12.Buffer
 {
     interface IBuffer : IDisposable
     {
-        void Load(GraphicsCommandList commandList);
+        void Load(IRenderWindowContext context);
     }
 }

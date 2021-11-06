@@ -17,6 +17,6 @@ namespace _3DNet.Engine.Scene
 
         void Rotate(Vector3F axis,float angle);
 
-        void Render(IRenderEngine engine);
+        void Render(IRenderWindowContext context);
     }
 }

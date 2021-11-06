@@ -8,19 +8,16 @@ namespace _3DNet.Rendering.D3D12.Shaders
 {
     internal class HlslShader : IShader, ID3DObject
     {
-        private GraphicsCommandList _commandList;
         private readonly D3DRenderEngine _d3DRenderEngine;
         private readonly Engine.Rendering.Shader.ShaderDescription _shaderDescription;
-        private readonly D3DRenderTargetFactory _renderTargetFactory;
         private PipelineState _graphicsPipelineState;
 
-        public HlslShader(string name, D3DRenderEngine d3DRenderEngine, D3DRenderTargetFactory renderTargetFactory, Engine.Rendering.Shader.ShaderDescription shaderDescription)
+        public HlslShader(string name, D3DRenderEngine d3DRenderEngine, Engine.Rendering.Shader.ShaderDescription shaderDescription)
         {
             Name = name;
             _d3DRenderEngine = d3DRenderEngine;
-            _renderTargetFactory = renderTargetFactory;
             _shaderDescription = shaderDescription;
-            _renderTargetFactory.RenderTargetCreated += RecreateShader;
+            _d3DRenderEngine.RenderTargetCreated += RecreateShader;
             _d3DRenderEngine.RegisterD3DObject(this);
         }
 
@@ -50,20 +47,20 @@ namespace _3DNet.Rendering.D3D12.Shaders
                 RootSignature = rootSignature,
                 VertexShader = LoadShaderByteCode(_shaderDescription.ShaderFile, _shaderDescription.VertexShaderMethod, _shaderDescription.VertexShaderProfile),
                 PixelShader = LoadShaderByteCode(_shaderDescription.ShaderFile, _shaderDescription.PixelShaderMethod, _shaderDescription.PixelShaderProfile),
-                RasterizerState = new RasterizerStateDescription { CullMode = CullMode.None,FillMode = FillMode.Solid},
+                RasterizerState = new RasterizerStateDescription { CullMode = CullMode.None, FillMode = FillMode.Solid },
                 BlendState = BlendStateDescription.Default(),
                 DepthStencilFormat = Format.D32_Float,
                 DepthStencilState = new DepthStencilStateDescription() { IsDepthEnabled = false, IsStencilEnabled = false },
                 SampleMask = int.MaxValue,
                 PrimitiveTopologyType = PrimitiveTopologyType.Triangle,
-                RenderTargetCount = _renderTargetFactory.NoOfCreatedTargets,
+                RenderTargetCount = _d3DRenderEngine.NoOfCreatedTargets,
                 Flags = PipelineStateFlags.None,
                 SampleDescription = new SampleDescription(1, 0),
                 StreamOutput = new StreamOutputDescription()
             };
-            for (var i = 0; i < _renderTargetFactory.NoOfCreatedTargets; i++)
+            for (var i = 0; i < _d3DRenderEngine.NoOfCreatedTargets; i++)
             {
-                gpsDesc.RenderTargetFormats[i] = _renderTargetFactory.RenderTargetFormats[i];
+                gpsDesc.RenderTargetFormats[i] = _d3DRenderEngine.RenderTargetFormats[i];
             }
 
             _graphicsPipelineState = _d3DRenderEngine.CreateGraphicsPipelineState(gpsDesc);
@@ -85,15 +82,10 @@ namespace _3DNet.Rendering.D3D12.Shaders
 
         public string Name { get; }
 
-        internal void LoadBuffer(IBuffer buffer)
-        {
-            buffer.Load(_commandList);
-        }
 
         public void Begin(GraphicsCommandList commandList)
         {
-            _commandList = commandList;
-            _commandList.PipelineState = _graphicsPipelineState;
+            commandList.PipelineState = _graphicsPipelineState;
         }
 
         public void End(GraphicsCommandList commandList)

@@ -1,4 +1,5 @@
-﻿using _3DNet.Engine.Rendering.Buffer;
+﻿using _3DNet.Engine.Rendering;
+using _3DNet.Engine.Rendering.Buffer;
 using SharpDX.Direct3D12;
 using System;
 using System.Collections.Generic;
@@ -16,28 +17,23 @@ namespace _3DNet.Rendering.D3D12.Buffer
         public VertexBuffer(Device device, IVertex[] data)
         {
             if (data.Length == 0) throw new ArgumentException("Vertex length cannot be 0");
-            int structSize = data[0].RawBuffer.Length;
-            var bufferSize = structSize * data.Length;
-            _vertexBuffer = device.CreateCommittedResource(new HeapProperties(HeapType.Upload), HeapFlags.None, ResourceDescription.Buffer(bufferSize), ResourceStates.GenericRead);
+            _structSize = data[0].RawBuffer.Length;
+            _bufferSize = _structSize * data.Length;
+            _vertexBuffer = device.CreateCommittedResource(new HeapProperties(HeapType.Upload), HeapFlags.None, ResourceDescription.Buffer(_bufferSize), ResourceStates.GenericRead);
             var pVertexDataBegin = _vertexBuffer.Map(0);
-            foreach(var buffer in data.Select(v=>v.RawBuffer))
-            { 
+            foreach (var buffer in data.Select(v => v.RawBuffer))
+            {
                 Marshal.Copy(buffer, 0, pVertexDataBegin, buffer.Length);
                 pVertexDataBegin += data.Length;
             }
             _vertexBuffer.Unmap(0);
-            _buffer = new VertexBufferView
-            {
-                BufferLocation = _vertexBuffer.GPUVirtualAddress,
-                StrideInBytes = structSize,
-                SizeInBytes = bufferSize
-            };
 
         }
-        private readonly VertexBufferView _buffer;
         private Resource _vertexBuffer;
+        private int _structSize;
+        private int _bufferSize;
 
-        public void Load(GraphicsCommandList commandList) => commandList.SetVertexBuffer(0, _buffer);
+        public void Load(IRenderWindowContext context) => context.SetVertexBuffer(new IntPtr(_vertexBuffer.GPUVirtualAddress), _bufferSize, _structSize);
 
         protected virtual void Dispose(bool disposing)
         {

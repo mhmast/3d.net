@@ -17,10 +17,7 @@ namespace _3DNet.Rendering.D3D12.Extensions
                 engine.Initialize();
                 return engine;
             })
-            .AddSingleton<D3DRenderTargetFactory>()
-            .AddTransient<IRenderTargetFactory>(s=>s.GetRequiredService<D3DRenderTargetFactory>())
             .AddTransient<IModelFactory, D3DModelFactory>()
-            .AddSingleton<Shaders.D3DShaderFactory>()
-            .AddTransient<IShaderFactory>(s=>s.GetRequiredService<D3DShaderFactory>());
+            .AddTransient<IShaderFactory>(s=>s.GetRequiredService<D3DRenderEngine>());
     }
 }

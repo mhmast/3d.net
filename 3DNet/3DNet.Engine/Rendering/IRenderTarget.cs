@@ -8,7 +8,7 @@ namespace _3DNet.Engine.Rendering
         Matrix4x4 Projection { get; }
         bool IsDisposed { get; }
 
-        void Clear(Color clearColor);
+        void Clear(IRenderWindowContext context, Color clearColor);
         void Present();
     }
 }

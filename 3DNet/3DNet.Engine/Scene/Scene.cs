@@ -37,19 +37,18 @@ namespace _3DNet.Engine.Scene
             return obj;
         }
 
-        public void RenderOn(IRenderTarget renderTarget, IRenderEngine renderEngine)
+        public void Render(IRenderWindowContext context)
         {
-            renderEngine.SetProjection(renderTarget.Projection);
-            bool success = renderEngine.BeginScene(renderTarget, BackgroundColor);
+            bool success = context.BeginScene(BackgroundColor);
             if(!success)
             {
                 return;
             }
             foreach (var obj in _createdObjects.Values)
             {
-                obj.Render(renderEngine);
+                obj.Render(context);
             }
-            renderEngine.EndScene(renderTarget);
+            context.EndScene();
         }
 
         public void Update()

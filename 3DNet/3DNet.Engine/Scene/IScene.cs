@@ -10,7 +10,7 @@ namespace _3DNet.Engine.Scene
 
         ISceneObject CreateStandardObject(string name,IModel model);
         ICamera CreateStandardCamera(string name);
-        void RenderOn(IRenderTarget renderTarget, IRenderEngine renderEngine);
+        void Render(IRenderWindowContext context);
         public Color BackgroundColor { get; set; }
 
         void SetActiveCamera(ICamera cam);

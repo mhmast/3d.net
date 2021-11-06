@@ -19,10 +19,11 @@ namespace _3DNet.Engine.Rendering.Model
         public HlslShader Shader { get ; }
         IShader IModel.Shader { get =>Shader;  }
 
-        public void Render(IRenderEngine engine)
+        public void Render(IRenderWindowContext context)
         {
-            Shader.LoadBuffer(_vertexBuffer);
-            Shader.LoadBuffer(_indexBuffer);
+            _vertexBuffer.Load(context);
+            _indexBuffer.Load(context);
         }
+
     }
 }

@@ -68,7 +68,7 @@ namespace _3DNet.Engine.Scene
             World = _scale * _rotation * _translation;
         }
 
-        public abstract void Render(IRenderEngine engine);
+        public abstract void Render(IRenderWindowContext context);
 
         public void MoveForward(Vector3F relativeAmount)
         {

@@ -47,9 +47,9 @@ namespace _3DNet.Engine.Scene
             _view = orientation * translation;
         }
 
-        public override void Render(IRenderEngine engine)
+        public override void Render(IRenderWindowContext context)
         {
-            engine.SetView(_view);
+            context.SetView(_view);
         }
 
     }

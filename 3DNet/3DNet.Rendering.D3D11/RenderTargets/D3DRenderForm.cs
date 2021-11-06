@@ -1,7 +1,6 @@
 ﻿using _3DNet.Engine.Rendering;
 using _3DNet.Math;
 using _3DNet.Rendering.D3D12.RenderTargets;
-using SharpDX;
 using SharpDX.Direct3D12;
 using SharpDX.DXGI;
 using System;
@@ -29,7 +28,6 @@ namespace _3DNet.Rendering.D3D12
         private SharpDX.Direct3D12.Resource _depthStencilBuffer;
         private CpuDescriptorHandle _depthStencilView;
         private GraphicsCommandList _commandList;
-        private readonly DisposeCollector _disposeCollector = new();
         private bool _buffer1Reset = true;
         private bool _buffer2Reset = true;
         
@@ -151,10 +149,10 @@ namespace _3DNet.Rendering.D3D12
         }
 
 
-        public void Clear(Color clearColor)
+        public void Clear(IRenderWindowContext context, Color clearColor)
         {
-            _commandList.ClearDepthStencilView(_depthStencilView, ClearFlags.FlagsStencil | ClearFlags.FlagsDepth, 1, 5);
-            _commandList.ClearRenderTargetView(_renderView, new SharpDX.Mathematics.Interop.RawColor4(clearColor.R, clearColor.G, clearColor.B, clearColor.A));
+            context.ClearDepthStencilView(_depthStencilView.Ptr, 1, 5);
+            context.ClearRenderTargetView(_renderView.Ptr, clearColor);
         }
 
         protected override void OnClientSizeChanged(EventArgs e)
