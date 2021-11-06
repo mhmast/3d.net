@@ -1,28 +1,27 @@
 ﻿using _3DNet.Engine.Rendering.Shader;
-using _3DNet.Rendering.D3D12.Buffer;
-using _3DNet.Rendering.D3D12.Shaders;
+using _3DNet.Rendering.Buffer;
 
 namespace _3DNet.Engine.Rendering.Model
 {
     internal class SimpleModel : IModel
     {
-        private readonly VertexBuffer _vertexBuffer;
-        private readonly IndexBuffer _indexBuffer;
+        private readonly IBuffer _vertexBuffer;
+        private readonly IBuffer _indexBuffer;
 
-        public SimpleModel(VertexBuffer buffer, IndexBuffer indexBuffer, HlslShader shader)
+        public SimpleModel(IBuffer buffer, IBuffer indexBuffer, IShader shader)
         {
             _vertexBuffer = buffer;
             _indexBuffer = indexBuffer;
             Shader = shader;
         }
 
-        public HlslShader Shader { get ; }
-        IShader IModel.Shader { get =>Shader;  }
-
+        public IShader Shader { get ; }
+        
         public void Render(IRenderWindowContext context)
         {
             _vertexBuffer.Load(context);
             _indexBuffer.Load(context);
+            Shader.Load(context);
         }
 
     }

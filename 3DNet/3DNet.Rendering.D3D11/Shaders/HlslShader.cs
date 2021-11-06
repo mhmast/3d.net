@@ -1,16 +1,22 @@
-﻿using _3DNet.Engine.Rendering.Shader;
+﻿using _3DNet.Engine.Rendering;
+using _3DNet.Engine.Rendering.Shader;
 using _3DNet.Rendering.D3D12.Buffer;
 using SharpDX.D3DCompiler;
 using SharpDX.Direct3D12;
 using SharpDX.DXGI;
+using System.Collections.Generic;
 
 namespace _3DNet.Rendering.D3D12.Shaders
 {
     internal class HlslShader : IShader, ID3DObject
     {
         private readonly D3DRenderEngine _d3DRenderEngine;
+        private readonly DescriptorHeap _shaderHeap;
         private readonly Engine.Rendering.Shader.ShaderDescription _shaderDescription;
         private PipelineState _graphicsPipelineState;
+        private D3DRenderWindowContext _context;
+        private RootSignature _rootSignature;
+        private readonly List<ShaderBuffer> _buffers = new();
 
         public HlslShader(string name, D3DRenderEngine d3DRenderEngine, Engine.Rendering.Shader.ShaderDescription shaderDescription)
         {
@@ -19,23 +25,27 @@ namespace _3DNet.Rendering.D3D12.Shaders
             _shaderDescription = shaderDescription;
             _d3DRenderEngine.RenderTargetCreated += RecreateShader;
             _d3DRenderEngine.RegisterD3DObject(this);
+            _shaderHeap = _d3DRenderEngine.CreateDescriptorHeap(new DescriptorHeapDescription
+            {
+                DescriptorCount = 1,
+                Flags = DescriptorHeapFlags.ShaderVisible,
+                Type = DescriptorHeapType.ConstantBufferViewShaderResourceViewUnorderedAccessView
+            });
+
+            for (var i = 0; i < _shaderDescription.Buffers.Count; i++)
+            {
+                ShaderBufferDescription bufferDesc = _shaderDescription.Buffers[i];
+                _buffers.Add(new ShaderBuffer($"{name}_shdrbffr_{i}", _d3DRenderEngine, _shaderHeap, bufferDesc));
+            }
         }
 
         private void RecreateShader()
         {
-            var rootSignatureDesc = new RootSignatureDescription(RootSignatureFlags.AllowInputAssemblerInputLayout,
-               new[]
-               {
-                                new RootParameter(ShaderVisibility.Vertex,
-                                    new DescriptorRange()
-                                    {
-                                        RangeType = DescriptorRangeType.ConstantBufferView,
-                                        BaseShaderRegister = 0,
-                                        OffsetInDescriptorsFromTableStart = int.MinValue,
-                                        DescriptorCount = 1
-                                    })
+            var rootSignatureDesc = new RootSignatureDescription(RootSignatureFlags.AllowInputAssemblerInputLayout, new[]
+            {
+                new RootParameter(ShaderVisibility.All,new RootDescriptor(),RootParameterType.ConstantBufferView)
             });
-            var rootSignature = _d3DRenderEngine.CreateRootSignature(rootSignatureDesc.Serialize());
+            _rootSignature = _d3DRenderEngine.CreateRootSignature(rootSignatureDesc.Serialize());
 
             var inputElementDescs = new[]
             {
@@ -44,7 +54,7 @@ namespace _3DNet.Rendering.D3D12.Shaders
             GraphicsPipelineStateDescription gpsDesc = new()
             {
                 InputLayout = new InputLayoutDescription(inputElementDescs),
-                RootSignature = rootSignature,
+                RootSignature = _rootSignature,
                 VertexShader = LoadShaderByteCode(_shaderDescription.ShaderFile, _shaderDescription.VertexShaderMethod, _shaderDescription.VertexShaderProfile),
                 PixelShader = LoadShaderByteCode(_shaderDescription.ShaderFile, _shaderDescription.PixelShaderMethod, _shaderDescription.PixelShaderProfile),
                 RasterizerState = new RasterizerStateDescription { CullMode = CullMode.None, FillMode = FillMode.Solid },
@@ -63,11 +73,14 @@ namespace _3DNet.Rendering.D3D12.Shaders
                 gpsDesc.RenderTargetFormats[i] = _d3DRenderEngine.RenderTargetFormats[i];
             }
 
+            _graphicsPipelineState?.Dispose();
             _graphicsPipelineState = _d3DRenderEngine.CreateGraphicsPipelineState(gpsDesc);
             _graphicsPipelineState.Name = $"gps_{Name}";
+
+
         }
 
-        private SharpDX.Direct3D12.ShaderBytecode LoadShaderByteCode(string shaderFile, string method, string profile)
+        private static SharpDX.Direct3D12.ShaderBytecode LoadShaderByteCode(string shaderFile, string method, string profile)
         {
             return new SharpDX.Direct3D12.ShaderBytecode(SharpDX.D3DCompiler.ShaderBytecode.CompileFromFile(shaderFile, method, profile
 #if DEBUG
@@ -83,19 +96,30 @@ namespace _3DNet.Rendering.D3D12.Shaders
         public string Name { get; }
 
 
-        public void Begin(GraphicsCommandList commandList)
+        public void Begin(D3DRenderWindowContext context)
         {
-            commandList.PipelineState = _graphicsPipelineState;
+            _context = context;
         }
 
-        public void End(GraphicsCommandList commandList)
+        public void End(D3DRenderWindowContext context)
         {
         }
 
         public void Dispose()
         {
             _graphicsPipelineState?.Dispose();
+            _shaderHeap?.Dispose();
             _d3DRenderEngine.UnregisterD3DObject(this);
+        }
+
+        public void Load(IRenderWindowContext context)
+        {
+            _context.SetPipelineState(_graphicsPipelineState);
+            _context.SetGraphicsRootSignature(_rootSignature);
+            foreach (var buffer in _buffers)
+            {
+                buffer.Load(context);
+            }
         }
     }
 }

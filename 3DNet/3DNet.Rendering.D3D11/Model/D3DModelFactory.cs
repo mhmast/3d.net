@@ -1,4 +1,6 @@
-﻿using _3DNet.Engine.Rendering.Model;
+﻿using _3DNet.Engine.Rendering.Buffer;
+using _3DNet.Engine.Rendering.Model;
+using _3DNet.Rendering.Buffer;
 
 namespace _3DNet.Rendering.D3D12.Model
 {
@@ -6,12 +8,15 @@ namespace _3DNet.Rendering.D3D12.Model
     {
         private readonly D3DRenderEngine _renderEngine;
         
-        public D3DModelFactory(D3DRenderEngine renderEngine)
+        public D3DModelFactory(D3DRenderEngine renderEngine):base(renderEngine)
         {
             _renderEngine = renderEngine;
         }
 
-        public override IModel CreateCube(float width, float height, float depth)
-        => new SimpleModel(_renderEngine.CreateVertexBuffer(CreateCubeVertices(width, height, depth)), _renderEngine.CreateIndexBuffer(CreateCubeIndices()),_renderEngine.DefaultShader);
+        protected override IBuffer CreateIndexBuffer(int[] indices)
+        =>_renderEngine.CreateIndexBuffer(indices);
+
+        protected override IBuffer CreateVertexBuffer(IVertex[] vertices)
+        => _renderEngine.CreateVertexBuffer(vertices);
     }
 }

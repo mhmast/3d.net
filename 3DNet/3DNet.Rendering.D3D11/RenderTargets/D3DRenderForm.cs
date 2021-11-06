@@ -27,7 +27,6 @@ namespace _3DNet.Rendering.D3D12
         private CpuDescriptorHandle _renderView;
         private SharpDX.Direct3D12.Resource _depthStencilBuffer;
         private CpuDescriptorHandle _depthStencilView;
-        private GraphicsCommandList _commandList;
         private bool _buffer1Reset = true;
         private bool _buffer2Reset = true;
         
@@ -212,29 +211,30 @@ namespace _3DNet.Rendering.D3D12
         }
 
 
-        public void Begin(GraphicsCommandList commandList)
+        public void Begin(D3DRenderWindowContext context)
         {
-            _commandList = commandList;
+            
             if(_buffer1Reset && _activeBackBuffer == _backBuffer1)
             {
-                _commandList.ResourceBarrierTransition(_backBuffer1, ResourceStates.Common, ResourceStates.RenderTarget);
+                context.ResourceBarrierTransition(_backBuffer1, ResourceStates.Common, ResourceStates.RenderTarget);
                 _buffer1Reset = false;
             }
             else if(_buffer2Reset && _activeBackBuffer == _backBuffer2)
             {
-                _commandList.ResourceBarrierTransition(_backBuffer2, ResourceStates.Common, ResourceStates.RenderTarget);
+                context.ResourceBarrierTransition(_backBuffer2, ResourceStates.Common, ResourceStates.RenderTarget);
                 _buffer2Reset = false;
             }
             else
             {
-                _commandList.ResourceBarrierTransition(_activeBackBuffer, ResourceStates.Present, ResourceStates.RenderTarget);
+                context.ResourceBarrierTransition(_activeBackBuffer, ResourceStates.Present, ResourceStates.RenderTarget);
             }
             _engine.CreateRenderTargetView(_activeBackBuffer, null, _renderView);
+            context.SetProjection(Projection);
         }
 
-        public void End(GraphicsCommandList commandList)
+        public void End(D3DRenderWindowContext context)
         {
-            _commandList.ResourceBarrierTransition(_activeBackBuffer, ResourceStates.RenderTarget, ResourceStates.Present);
+            context.ResourceBarrierTransition(_activeBackBuffer, ResourceStates.RenderTarget, ResourceStates.Present);
             _activeBackBuffer = _activeBackBuffer == _backBuffer1 ? _backBuffer2 : _backBuffer1;
         }
     }

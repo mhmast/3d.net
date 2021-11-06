@@ -6,5 +6,6 @@ namespace _3DNet.Engine.Rendering.Shader
     {
         string Name { get; }
         string ShaderSignature { get; }
+        void Load(IRenderWindowContext context);
     }
 }

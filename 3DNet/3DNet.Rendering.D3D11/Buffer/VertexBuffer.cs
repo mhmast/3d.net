@@ -1,5 +1,6 @@
 ﻿using _3DNet.Engine.Rendering;
 using _3DNet.Engine.Rendering.Buffer;
+using _3DNet.Rendering.Buffer;
 using SharpDX.Direct3D12;
 using System;
 using System.Collections.Generic;

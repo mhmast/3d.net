@@ -26,6 +26,9 @@ namespace _3DNet.Rendering.D3D12
         private readonly string _basePath = new FileInfo(typeof(D3DRenderEngine).Assembly.Location).DirectoryName;
         private readonly IDictionary<string, HlslShader> _shaders = new Dictionary<string, HlslShader>();
 
+        internal void CreateConstantBufferView(ConstantBufferViewDescription cbvDesc, CpuDescriptorHandle cPUDescriptorHandleForHeapStart)
+        => _device.CreateConstantBufferView(cbvDesc, cPUDescriptorHandleForHeapStart);
+
         internal int NoOfCreatedTargets => _activeTargets.Count;
 
         internal Format[] RenderTargetFormats => _activeTargets.Values.Select(t => t.Format).ToArray();
@@ -97,8 +100,18 @@ namespace _3DNet.Rendering.D3D12
             _device = new Device(adapter, FeatureLevel.Level_12_1);
             _commandQueue = _device.CreateCommandQueue(new CommandQueueDescription(CommandListType.Direct));
             _commandAllocator = _device.CreateCommandAllocator(CommandListType.Direct);
-            DefaultShader = LoadShader("Default", new ShaderDescription { ShaderFile = Path.Combine(_basePath, "Shaders", "default.hlsl"), VertexShaderMethod = "VSMain", PixelShaderMethod = "PSMain", VertexShaderProfile = "vs_5_0", PixelShaderProfile = "ps_5_0" });
+            var defaultShaderDescription = new ShaderDescription(Path.Combine(_basePath, "Shaders", "default.hlsl"), "vs_5_0", "VSMain", "ps_5_0", "PSMain");
+            defaultShaderDescription.Buffers.Add(new ShaderBufferDescription(0,BufferType.GPUInput,sizeof(float)*16*3,BufferUsage.VertexShader,GetWVPData));
+            DefaultShader = LoadShader("Default", defaultShaderDescription);
 
+        }
+
+        private byte[] GetWVPData(IRenderWindowContext context)
+        {
+            var floats = context.World.Data;// (context.World * context.View* context.Projection).Data;
+            var bytes = new byte[floats.Length*sizeof(float)];
+            System.Buffer.BlockCopy(floats, 0, bytes, 0, bytes.Length);
+            return bytes;
         }
 
         internal RootSignature CreateRootSignature(Blob byteCode) => _device.CreateRootSignature(byteCode);
@@ -114,12 +127,13 @@ namespace _3DNet.Rendering.D3D12
 
         internal void CreateRenderTargetView(SharpDX.Direct3D12.Resource backBuffer, RenderTargetViewDescription? desc, CpuDescriptorHandle renderView) => _device.CreateRenderTargetView(backBuffer, desc, renderView);
 
-        internal SharpDX.Direct3D12.Resource CreateCommittedResource(HeapProperties heapProperties, HeapFlags heapFlags, ResourceDescription desc, ResourceStates copyDestination, ClearValue? clearValue) => _device.CreateCommittedResource(heapProperties, heapFlags, desc, copyDestination, clearValue);
+        internal SharpDX.Direct3D12.Resource CreateCommittedResource(HeapProperties heapProperties, HeapFlags heapFlags, ResourceDescription desc, ResourceStates copyDestination, ClearValue? clearValue = null) => _device.CreateCommittedResource(heapProperties, heapFlags, desc, copyDestination, clearValue);
 
         internal void CreateDepthStencilView(SharpDX.Direct3D12.Resource depthStencilBuffer, DepthStencilViewDescription? descRef, CpuDescriptorHandle depthStencilView) => _device.CreateDepthStencilView(depthStencilBuffer, descRef, depthStencilView);
 
         public IRenderWindowContext CreateRenderWindowContext(string name, Size size, bool fullScreen)
         => new D3DRenderWindowContext(_device, _commandAllocator, _commandQueue, _d3DObjects, CreateWindow(size, name, fullScreen));
+
 
     }
 }

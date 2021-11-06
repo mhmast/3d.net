@@ -1,9 +1,9 @@
 ﻿using _3DNet.Engine.Rendering;
 using System;
 
-namespace _3DNet.Rendering.D3D12.Buffer
+namespace _3DNet.Rendering.Buffer
 {
-    interface IBuffer : IDisposable
+    public interface IBuffer : IDisposable
     {
         void Load(IRenderWindowContext context);
     }

@@ -1,4 +1,9 @@
-﻿struct PSInput
+﻿cbuffer globals : register(b0)
+{
+	matrix wvp;
+};
+
+struct PSInput
 {
 	float4 position : SV_POSITION;
 };
@@ -7,7 +12,7 @@ PSInput VSMain(float4 position : SV_POSITION)
 {
 	PSInput result;
 
-	result.position = position;
+	result.position = mul(position,wvp);
 
 	return result;
 }

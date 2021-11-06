@@ -1,7 +1,7 @@
 ﻿using _3DNet.Engine.Rendering;
+using _3DNet.Rendering.Buffer;
 using SharpDX;
 using SharpDX.Direct3D12;
-using SharpDX.DXGI;
 using System;
 using System.Collections.Generic;
 using System.Linq;

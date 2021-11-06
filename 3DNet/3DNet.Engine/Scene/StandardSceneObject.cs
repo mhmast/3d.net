@@ -15,6 +15,7 @@ namespace _3DNet.Engine.Scene
 
         public override void Render(IRenderWindowContext context)
         {
+            context.SetWorld(World);
             _model.Render(context);
         }
     }
