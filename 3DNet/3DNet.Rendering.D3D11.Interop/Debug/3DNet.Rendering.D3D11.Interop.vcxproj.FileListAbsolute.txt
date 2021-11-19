@@ -1,4 +1,0 @@
-C:\Ontwik\3d.net\3DNet\Debug\Ijwhost.dll
-C:\Ontwik\3d.net\3DNet\Debug\3DNet.Rendering.D3D11.Interop.deps.json
-C:\Ontwik\3d.net\3DNet\Debug\3DNet.Rendering.D3D11.Interop.runtimeconfig.json
-C:\Ontwik\3d.net\3DNet\3DNet.Rendering.D3D11.Interop\Debug\3DNet.Rendering.D3D11.Interop.genruntimeconfig.cache

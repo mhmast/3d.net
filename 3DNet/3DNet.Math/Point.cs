@@ -24,7 +24,7 @@ namespace _3DNet.Math
         public static bool operator ==(Point left, Point right) => left.Key == right.Key;
         public static bool operator !=(Point left, Point right) => !(left == right);
         public static Point operator +(Point left, Point right) => new Point(left.X + right.X, left.Y + right.Y);
-        public static Point operator +(Point left, PointF right) => new Point((int)(left.X + right.X), (int)(left.Y + right.Y));
+        public static Point operator +(Point left, Vector2F right) => new Point((int)(left.X + right.X), (int)(left.Y + right.Y));
         public static Point operator +(Point left, int right) => new Point(left.X + right, left.Y + right);
         public static Point operator -(Point left, Point right) => new Point(left.X - right.X, left.Y - right.Y);
         public static Point operator -(Point left, int right) => new Point(left.X - right, left.Y - right);

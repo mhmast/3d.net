@@ -4,84 +4,49 @@ using System.Linq;
 
 namespace _3DNet.Math
 {
-    public abstract class MatrixBase<T, TVector> where T : MatrixBase<T, TVector> where TVector : MatrixBase<TVector, TVector>
+
+
+    public abstract class MatrixBase<TMatrix, TRowVector, TColumnVector> : IMatrix<TMatrix>
+        where TMatrix : MatrixBase<TMatrix, TRowVector, TColumnVector>
+        where TRowVector : MatrixBase<TRowVector, Scalar, TRowVector>, IVector
+        where TColumnVector : MatrixBase<TColumnVector, Scalar, TColumnVector>, IVector
     {
-        private float[][] _data;
-#if DEBUG
-        public event Action<int, int, float> MatChanged;
-#endif
-        protected MatrixBase(float value)
+        public MatrixBase(params TRowVector[] rows)
         {
-            _data = GenerateData(value);
+            _rows = rows;
         }
 
-        public MatrixBase(params TVector[] rows)
+        public MatrixBase(params Scalar[] values)
         {
-            _data = rows.Select(r => r._data.Select(d=>d[0]).ToArray()).ToArray();
+            _rows = ScalarsToRows(values);
         }
 
-        public abstract int Rows { get;  }
-        public abstract int Cols { get;  }
+        public abstract int Rows { get; }
+        public abstract int Cols { get; }
+        public abstract TMatrix Instance { get; }
 
-        private float[][] GenerateData(float value)
+        private TRowVector[] ScalarsToRows(Scalar[] values)
         {
-            if (value == 0) return GenerateDataZero();
-            var data = new float[Rows][];
-            for (var r = 0; r < Rows; r++)
+            if (values.Length % Cols > 0)
             {
-                var c = new float[Cols];
-                Array.Fill(c, value);
-                data[r] = c;
+                throw new ArgumentException($"Number of scalars must be dividable by {Cols}");
             }
-            return data;
-        }
-
-        private float[][] GenerateDataZero()
-        {
-            var data = new float[Rows][];
-            for (var r = 0; r < Rows; r++)
+            IEnumerable<TRowVector> Convert(Scalar[] values)
             {
-                data[r] = new float[Cols];
-            }
-            return data;
-        }
-
-
-
-        protected MatrixBase(float[] data)
-        {
-            _data = FormatData(data);
-        }
-
-        protected MatrixBase(float[][] data)
-        {
-
-            if (data != null)
-            {
-                if (data.Length != Rows || Cols > 0 && data[0].Length != Cols)
+                for (int i = 0; i < Cols; i++)
                 {
-                    throw new ArgumentException();
+                    yield return CreateRow(values.Skip(i * Cols).Take(Cols).ToArray());
                 }
-                _data = data;
             }
-            else
-            {
-                _data = GenerateDataZero();
-            }
+            return Convert(values).ToArray();
         }
 
-        private float[][] FormatData(float[] data)
+        private TRowVector[] _rows;
+
+        protected MatrixBase(Scalar value)
         {
-            if (data == null) return null;
-            var newData = new float[Rows][];
-            for (int r = 0; r < Rows; r++)
-            {
-                newData[r] = new float[Cols];
-                Array.Copy(data, r * Cols, newData[r], 0, Cols);
-            }
-            return newData;
+            _rows = GenerateData(value);
         }
-
 
         public float SumRange(int startRow, int endRow, int startCol, int endCol)
         {
@@ -102,21 +67,20 @@ namespace _3DNet.Math
             {
                 for (var col = startCol; col <= endCol; col++)
                 {
-                    sum += this[row, col];
+                    sum += this[row][col];
                 }
             }
             return sum;
         }
 
-        public float SumAll()
-        => SumRange(1, Rows, 1, Cols); public float Min()
+        public float Min()
         {
             var min = float.PositiveInfinity;
             for (var row = 1; row <= Rows; row++)
             {
                 for (var col = 1; col <= Cols; col++)
                 {
-                    min = System.Math.Min(min, this[row, col]);
+                    min = System.Math.Min(min, this[row][col]);
                 }
             }
             return min;
@@ -129,262 +93,35 @@ namespace _3DNet.Math
             {
                 for (var col = 1; col <= Cols; col++)
                 {
-                    max = System.Math.Max(max, this[row, col]);
+                    max = System.Math.Max(max, this[row][col]);
                 }
             }
             return max;
         }
-
-        public T Transpose()
+        public TRowVector this[int row]
         {
-            var newData = new float[Cols][];
-            for (int c = 0; c < Cols; c++)
-            {
-                newData[c] = _data.Select(r => r[c]).ToArray();
-            }
-            return (T)Activator.CreateInstance(typeof(T), (object)newData);
-        }
-
-        public bool Empty()
-        => _data.Length == 0;
-
-
-        public IEnumerable<Point> Find(Predicate<float> expr)
-        {
-            for (int row = 1; row <= Rows; row++)
-            {
-                for (int column = 1; column <= Cols; column++)
-                {
-                    if (expr(this[row, column]))
-                    {
-                        yield return new Point(column, row);
-                    }
-                }
-            }
-        }
-
-
-        public TVector Row(int row)
-        {
-            if (Rows > row)
-            {
-                throw new IndexOutOfRangeException($"Cannot get row {row}. Not enough rows");
-            }
-            return (TVector)Activator.CreateInstance(typeof(TVector),(object)_data[row]);
-        }
-
-        public TVector Col(int col)
-        {
-            if (Rows != 3)
-            {
-                throw new ArgumentException("Cannot get a vector3f column from a non 3x? Mat");
-            }
-            if (Cols > col)
-            {
-                throw new IndexOutOfRangeException($"Cannot get col {col}. Not enough cols");
-            }
-            return (TVector)Activator.CreateInstance(typeof(TVector), (object)_data.Select(cols=>cols[col]).ToArray());
-        }
-
-        public float this[int row, int col]
-        {
-            get => _data[row - 1][col - 1];
+            get => _rows[row];
             set
-            {
-
-                _data[row - 1][col - 1] = value;
-#if DEBUG
-                MatChanged?.Invoke(row, col, value);
-#endif
-            }
+            => _rows[row] = value;
         }
 
-        //public Matrix Range(int startRow, int endRow, int startCol, int endCol)
-        //{
-        //    if (startRow * endRow * startCol * endCol == 0)
-        //    {
-        //        throw new ArgumentException();
-        //    }
-        //    var noRows = endRow - startRow + 1;
-        //    var noCols = endCol - startCol + 1;
-        //    var overlapCols = System.Math.Min(Cols, endCol) - startCol + 1;
-        //    var overlapRows = System.Math.Min(Rows, endRow) - startRow + 1;
-        //    var retMat = Zeros(noRows, noCols);
-        //    if (overlapCols == 0 || overlapRows == 0)
-        //    {
-        //        return retMat;
-        //    }
-
-        //    for (int row = 0; row < overlapRows; row++)
-        //    {
-        //        Array.Copy(_data[row + startRow - 1], startCol - 1, retMat._data[row], 0, overlapCols);
-        //    }
-
-        //    return retMat;
-
-        //    //for (var row = startRow; row <= minRow; row++)
-        //    //{
-        //    //    var addr = GetArrAddr(row, startCol);
-        //    //    Array.Copy(_data, addr, newData, (row - startRow) * noCols, minCol - startCol + 1);
-        //    //    //for (var col = startCol; col <= minCol; col++)
-        //    //    //{
-        //    //    //    var addr2 = GetArrAddr(row, col);
-        //    //    //    newData2[row*noCols+(col - startCol)] = _data[addr2];
-        //    //    //}
-        //    //}
-        //}
-
-        public IEnumerable<TVector> Columns()
+        public Scalar this[Point pos]
         {
-            for (int c = 0; c < Cols; c++)
-            {
-                yield return (TVector)Activator.CreateInstance(typeof(TVector), (object)_data.Select(r => r[c]).ToArray());
-            }
+            get => this[pos.X][pos.Y];
+            set => this[pos.X][pos.Y] = value;
         }
 
-        public float this[int pos]
+        public Scalar[] Data
         {
             get
             {
-                var (row, col) = GetRowCol(pos);
-                return this[row, col];
-            }
-            set
-            {
-                var (row, col) = GetRowCol(pos);
-                this[row, col] = value;
-            }
-        }
-
-        public float this[Point pos]
-        {
-            get => this[pos.X, pos.Y];
-            set => this[pos.X, pos.Y] = value;
-        }
-
-
-
-        public void SetAll(float val)
-        {
-            _data = GenerateData(val);
-        }
-
-        public T Copy()
-        => (T)Activator.CreateInstance(typeof(T), (object)_data);
-
-
-        public T BinaryTresh(float tresh)
-        => ProductTemplate(this, (_, __) => tresh, (v, t) => v <= t ? 0 : 1);
-        private T ProductTemplate(MatrixBase<T,TVector> other, Func<float, float, float> @operator)
-        {
-            if (Empty())
-            {
-                return other.Copy();
-            }
-            if (other.Empty())
-            {
-                return Copy();
-            }
-
-            if (other.Size == Size)
-            {
-                return ProductTemplate(this, (row, col) => other[row, col], @operator);
-            }
-            if (Cols == other.Cols)
-            {
-                if (Rows == 1)
-                {
-                    return ProductTemplate(other, (row, col) => this[1, col], @operator);
-                }
-                if (other.Rows == 1)
-                {
-                    return ProductTemplate(this, (row, col) => other[1, col], @operator);
-                }
-            }
-            else if (Rows == other.Rows)
-            {
-                if (Cols == 1)
-                {
-                    return ProductTemplate(other, (row, col) => this[row, 1], @operator);
-                }
-                if (other.Cols == 1)
-                {
-                    return ProductTemplate(this, (row, col) => other[row, 1], @operator);
-                }
-            }
-            throw new ArgumentException();
-        }
-
-        public Point Point(int row, int col) => new Point((int)this[row, col], (int)this[row + 1, col]);
-
-        private T ProductTemplate(MatrixBase<T,TVector> m, Func<int, int, float> valueSelector, Func<float, float, float> @operator)
-        {
-            var retVal = new float[m.Rows][];
-
-            for (int i = 1; i <= m.Rows; i++)
-            {
-                var col = new float[m.Cols];
-                for (int c = 1; c <= Cols; c++)
-                {
-                    col[c - 1] = @operator(m[i, c], valueSelector(i, c));
-                }
-                retVal[i - 1] = col;
-            }
-            return (T)Activator.CreateInstance(typeof(T), (object)retVal);
-        }
-
-        public T Mul(float value)
-            => ProductTemplate(this, (row, col) => value, (l, r) => l * r);
-
-        public T Mul(MatrixBase<T,TVector> value)
-            => ProductTemplate(value, (l, r) => l * r);
-
-        public static T operator *(MatrixBase<T,TVector> m, float value) => m.Mul(value);
-        public static T operator *(T m, MatrixBase<T, TVector> value) => m.Mul(value);
-
-        public T Minus(float value)
-            => ProductTemplate(this, (row, col) => value, (l, r) => l - r);
-        public T Minus(T value)
-            => ProductTemplate(value, (l, r) => l - r);
-
-        public static T operator -(MatrixBase<T, TVector> m, float value) => m.Minus(value);
-        public static T operator -(MatrixBase<T, TVector> m, T value) => m.Minus(value);
-
-        public T Div(float value)
-            => ProductTemplate(this, (row, col) => value, (l, r) => l / r);
-        public T Div(T value)
-            => ProductTemplate(value, (l, r) => l / r);
-
-        public static T operator /(MatrixBase<T, TVector> m, float value) => m.Div(value);
-        public static T operator /(MatrixBase<T, TVector> m, T value) => m.Div(value);
-
-
-        public T Plus(float value)
-            => ProductTemplate(this, (row, col) => value, (l, r) => l + r);
-        public T Plus(T value)
-            => ProductTemplate(value, (l, r) => l + r);
-
-        public static T operator +(MatrixBase<T, TVector> m, float value) => m.Plus(value);
-        public static T operator +(MatrixBase<T, TVector> m, T value) => m.Plus(value);
-
-
-        public unsafe float[] Data
-        {
-            get
-            {
-                var dta = new float[Rows * Cols];
+                var dta = new Scalar[Rows * Cols];
                 for (var row = 0; row < Rows; row++)
                 {
-                    Array.Copy(_data[row], 0, dta, row * Cols, Cols);
+                    Array.Copy(_rows[row].Data, 0, dta, row * Cols, Cols);
                 }
                 return dta;
             }
-        }
-
-        private (int, int) GetRowCol(int pos)
-        {
-            var row = pos / Cols + (pos % Cols > 0 ? 1 : 0);
-            return (row, pos - (row - 1) * Cols);
         }
 
         //public static Mat FromCV(OpenCvSharp.Mat cvMat)
@@ -421,10 +158,229 @@ namespace _3DNet.Math
         public Point Size
         => new Point(Cols, Rows);
 
+        IVector IMatrix.this[int row] { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
 
-        public T Pow(float power) => ProductTemplate(this, (r, c) => power, (l, r) => (float)System.Math.Pow(l, r));
-        public T Floor() => ProductTemplate(this, (r, c) => 0.0f, (l, r) => (float)System.Math.Floor(l));
+        public IVector Col(int col) => Col(_rows, col);
 
-        
+        private TRowVector Row(TColumnVector[] cols, int r)
+            => CreateRow(cols.Select(c => c[r]).ToArray());
+
+        private TColumnVector Col(TRowVector[] rows, int c)
+        => CreateColumn(rows.Select(row => row[c]).ToArray());
+
+        //public Matrix Range(int startRow, int endRow, int startCol, int endCol)
+        //{
+        //    if (startRow * endRow * startCol * endCol == 0)
+        //    {
+        //        throw new ArgumentException();
+        //    }
+        //    var noRows = endRow - startRow + 1;
+        //    var noCols = endCol - startCol + 1;
+        //    var overlapCols = System.Math.Min(Cols, endCol) - startCol + 1;
+        //    var overlapRows = System.Math.Min(Rows, endRow) - startRow + 1;
+        //    var retMat = Zeros(noRows, noCols);
+        //    if (overlapCols == 0 || overlapRows == 0)
+        //    {
+        //        return retMat;
+        //    }
+
+        //    for (int row = 0; row < overlapRows; row++)
+        //    {
+        //        Array.Copy(_data[row + startRow - 1], startCol - 1, retMat._data[row], 0, overlapCols);
+        //    }
+
+        //    return retMat;
+
+        //    //for (var row = startRow; row <= minRow; row++)
+        //    //{
+        //    //    var addr = GetArrAddr(row, startCol);
+        //    //    Array.Copy(_data, addr, newData, (row - startRow) * noCols, minCol - startCol + 1);
+        //    //    //for (var col = startCol; col <= minCol; col++)
+        //    //    //{
+        //    //    //    var addr2 = GetArrAddr(row, col);
+        //    //    //    newData2[row*noCols+(col - startCol)] = _data[addr2];
+        //    //    //}
+        //    //}
+        //}
+
+        public IEnumerable<IVector> Columns()
+        {
+            for (int c = 0; c < Cols; c++)
+            {
+                yield return Col(c);
+            }
+        }
+
+
+        public TMatrix Copy() => CreateMatrixFromRows(_rows);
+
+        public bool Empty()
+        => _rows.Length == 0;
+
+        public override bool Equals(object obj)
+        {
+            if (obj is MatrixBase<TMatrix, TRowVector, TColumnVector> other)
+            {
+                return Data.SequenceEqual(other.Data);
+            }
+            return false;
+        }
+
+
+        public Point Point(int row, int col) => new Point((int)this[row][col], (int)this[row + 1][col]);
+
+
+        public TMatrix Pow(Scalar power) => ProductTemplate((TMatrix)null, (r, i, j) => MaskCol<TColumnVector>(i), (l, r) => (float)System.Math.Pow((l * r).SumAll(), power));
+
+        private IVector MaskCol<TCol>(int row)
+            where TCol : IVector
+        {
+            var col = CreateColumnZeros();
+            col[row] = 1;
+            return col;
+        }
+
+        public void SetAll(float val)
+        {
+            _rows = GenerateData(val);
+        }
+
+        public float SumAll()
+        => SumRange(1, Rows, 1, Cols);
+        public TMatrix Transpose()
+        {
+            var newData = new TColumnVector[Cols];
+            for (int c = 0; c < Cols; c++)
+            {
+                newData[c] = CreateColumn(_rows.Select(r => r[c]).ToArray());
+            }
+            return CreateMatrixFromColumns(newData);
+        }
+
+
+        private TRowVector[] GenerateData(float value)
+        {
+            if (value == 0)
+            {
+                return GenerateDataZero();
+            }
+            var data = new TRowVector[Rows];
+            for (var r = 0; r < Rows; r++)
+            {
+                var row = CreateRowZeros();
+                for(int col=0;col<row.Cols;col++)
+                {
+                    row[col] = value;
+                }
+                data[r] = row;
+            }
+            return data;
+        }
+
+        private TRowVector[] GenerateDataZero()
+        {
+            var data = new TRowVector[Rows];
+            for (var r = 0; r < Rows; r++)
+            {
+                data[r] = CreateRowZeros();
+            }
+            return data;
+        }
+
+        private TMatrix ProductTemplate<TRight>(TRight right, Func<TRight, int, int, IVector> colSelector, Func<TRowVector, IVector, Scalar> @operator)
+        where TRight: IMatrix
+        {
+            if (Empty() || right.Empty())
+            {
+                return Copy();
+            }
+            var retVal = new IVector[Rows];
+
+            for (int r = 1; r <= Rows; r++)
+            {
+                var current = Zeros();
+                for (int c = 1; c <= right.Cols; c++)
+                {
+                    current[r][c - 1] = @operator(this[r], colSelector(right, r, c));
+                }
+            }
+            return CreateMatrixFromRows(retVal);
+        }
+
+        //private static T CreateRowVector<T>(Scalar[] data) where T : IVector<T> => (T)Activator.CreateInstance(typeof(T), data);
+        //private static T CreateRowVector<T>(Scalar data) where T : IVector<T> => (T)Activator.CreateInstance(typeof(T), data);
+        //private static T CreateColVector<T>(Scalar[] data) where T : IVector<T> => (T)Activator.CreateInstance(typeof(T), data);
+        //private static T CreateColVector<T>(Scalar data) where T : IVector<T> => (T)Activator.CreateInstance(typeof(T), data);
+        public abstract TMatrix CreateMatrix
+           (params Scalar[] values);
+
+        public abstract TColumnVector CreateColumn(params Scalar[] values);
+        public abstract TColumnVector CreateColumnZeros();
+        public abstract TRowVector CreateRow(params Scalar[] values);
+        public abstract TRowVector CreateRowZeros();
+
+        public abstract TMatrix CreateMatrixFromColumns(params IVector[] cols);
+        public abstract TMatrix CreateMatrixFromRows(params IVector[] rows);
+
+        public IEnumerable<Point> Find(Predicate<float> expr)
+        {
+            for (int row = 1; row <= Rows; row++)
+            {
+                for (int column = 1; column <= Cols; column++)
+                {
+                    if (expr(this[row][column]))
+                    {
+                        yield return new Point(column, row);
+                    }
+                }
+            }
+        }
+        private TMatrix Times(IMatrix value) => ProductTemplate( value, (r, i, j) => r.Col(j), (r, c) => r.Times(c).SumAll());
+        private TMatrix Times(Scalar value) => ProductTemplate((TMatrix)null, (r, i, j) => MaskCol<TColumnVector>(i), (r, c) => r.Times(c).SumAll() * value);
+        private TMatrix Times(TColumnVector value) => ProductTemplate(value, (r, i, j) => r, (r, c) => r.Times(c).SumAll());
+        private TMatrix Minus(IMatrix value) => ProductTemplate( value, (r, i, j) => r.Col(j), (r, c) => r.Minus(c).SumAll());
+        private TMatrix Minus(Scalar value) => ProductTemplate((TMatrix)null, (r, i, j) => MaskCol<TColumnVector>(i), (r, c) => r.Minus(c).SumAll() - value);
+        private TMatrix Minus(TColumnVector value) => ProductTemplate(value, (r, i, j) => r, (r, c) => r.Minus(c).SumAll());
+        private TMatrix Div(IMatrix value) => ProductTemplate( value, (r, i, j) => r.Col(j), (r, c) => r.Div(c).SumAll());
+        private TMatrix Div(Scalar value) => ProductTemplate((TMatrix)null, (r, i, j) => MaskCol<TColumnVector>(i), (r, c) => r.Div(c).SumAll() / value);
+        private TMatrix Div(TColumnVector value) => ProductTemplate(value, (r, i, j) => r, (r, c) => r.Div(c).SumAll());
+        private TMatrix Plus(IMatrix value) => ProductTemplate( value, (r, i, j) => r.Col(j), (r, c) => r.Plus(c).SumAll());
+        private TMatrix Plus(Scalar value) => ProductTemplate((TMatrix)null, (r, i, j) => MaskCol<TColumnVector>(i), (r, c) => r.Plus(c).SumAll() + value);
+        private TMatrix Plus(TColumnVector value) => ProductTemplate(value, (r, i, j) => r, (r, c) => r.Plus(c).SumAll());
+
+        public TMatrix Zeros() => CreateMatrixFromRows(GenerateDataZero());
+
+        public IVector Row(int j)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override int GetHashCode()
+        {
+            return HashCode.Combine(Rows, Cols, Data);
+        }
+
+        public static TMatrix operator *(MatrixBase<TMatrix, TRowVector, TColumnVector> m, Scalar value) => m.Times(value);
+        public static TMatrix operator *(MatrixBase<TMatrix, TRowVector, TColumnVector> m, IMatrix value) => m.Times(value);
+        public static TMatrix operator *(MatrixBase<TMatrix, TRowVector, TColumnVector> m, TColumnVector value) => m.Times(value);
+        public static TRowVector operator *(TRowVector value, MatrixBase<TMatrix, TRowVector, TColumnVector> m) => value.Times(m);
+
+        public static TMatrix operator -(MatrixBase<TMatrix, TRowVector, TColumnVector> m, Scalar value) => m.Minus(value);
+        public static TMatrix operator -(MatrixBase<TMatrix, TRowVector, TColumnVector> m, TMatrix value) => m.Minus(value);
+        public static TMatrix operator -(MatrixBase<TMatrix, TRowVector, TColumnVector> m, TRowVector value) => m.Minus(value);
+        public static TRowVector operator -(TRowVector value, MatrixBase<TMatrix, TRowVector, TColumnVector> m) => value.Minus(m);
+
+        public static TMatrix operator /(MatrixBase<TMatrix, TRowVector, TColumnVector> m, Scalar value) => m.Div(value);
+        public static TMatrix operator /(MatrixBase<TMatrix, TRowVector, TColumnVector> m, TMatrix value) => m.Div(value);
+        public static TMatrix operator /(MatrixBase<TMatrix, TRowVector, TColumnVector> m, TRowVector value) => m.Div(value);
+        public static TRowVector operator /(TRowVector value, MatrixBase<TMatrix, TRowVector, TColumnVector> m) => value.Div(m);
+
+        public static TMatrix operator +(MatrixBase<TMatrix, TRowVector, TColumnVector> m, Scalar value) => m.Plus(value);
+        public static TMatrix operator +(MatrixBase<TMatrix, TRowVector, TColumnVector> m, TMatrix value) => m.Plus(value);
+        public static TMatrix operator +(MatrixBase<TMatrix, TRowVector, TColumnVector> m, TRowVector value) => m.Plus(value);
+        public static TRowVector operator +(TRowVector value, MatrixBase<TMatrix, TRowVector, TColumnVector> m) => value.Plus(m);
     }
+
+
+
 }

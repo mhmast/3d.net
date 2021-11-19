@@ -14,7 +14,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\3DNet.Engine\3DNet.Engine.csproj" />
-    <ProjectReference Include="..\3DNet.Rendering.D3D11\3DNet.Rendering.D3D12.csproj" />
+    <ProjectReference Include="..\3DNet.Rendering.D3D12\3DNet.Rendering.D3D12.csproj" />
   </ItemGroup>
 
 </Project>

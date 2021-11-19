@@ -3,28 +3,18 @@ using static System.Math;
 
 namespace _3DNet.Math
 {
-    public class Matrix4x4 : MatrixBase<Matrix4x4, Vector4F>
+    public class Matrix4x4 : MatrixBase<Matrix4x4, Vector4F,Vector4F>
     {
-        public Matrix4x4(float value) : base(value)
-        {
-        }
-
-        public Matrix4x4(float[] data) : base(data)
-        {
-        }
-        public Matrix4x4(float[][] data) : base(data)
-        {
-        }
-
         public Matrix4x4(params Vector4F[] rows) : base(rows)
         {
         }
+        public static Matrix4x4 Identity => new Matrix4x4((1, 0, 0, 0), (0, 1, 0, 0), (0, 0, 1, 0), (0, 0, 0, 1));
 
         public override int Rows => 4;
 
         public override int Cols => 4;
 
-        public static Matrix4x4 Identity => new Matrix4x4((1, 0, 0, 0), (0, 1, 0, 0), (0, 0, 1, 0), (0, 0, 0, 1));
+        public override Matrix4x4 Instance => this;
 
         public static Matrix4x4 Translate(Vector3F position)
         => new Matrix4x4((1, 0, 0, position.X), (0, 1, 0, position.Y), (0, 0, 1, position.Z), (0, 0, 0, 1));
@@ -46,5 +36,40 @@ namespace _3DNet.Math
 
         private static float Cot(float v)
         => 1f / (float)Tan(v);
+
+        public override Matrix4x4 CreateMatrix(params Scalar[] values)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override Vector4F CreateColumn(params Scalar[] values)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override Vector4F CreateColumnZeros()
+        {
+            throw new NotImplementedException();
+        }
+
+        public override Vector4F CreateRow(params Scalar[] values)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override Vector4F CreateRowZeros()
+        {
+            throw new NotImplementedException();
+        }
+
+        public override Matrix4x4 CreateMatrixFromColumns(params IVector[] cols)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override Matrix4x4 CreateMatrixFromRows(params IVector[] rows)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

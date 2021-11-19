@@ -95,9 +95,9 @@ namespace _3DNet.Engine.Scene
         public void Rotate(Vector3F axis, float angle)
         {
             _rotationQuat += Quaternion.CreateFromAxisAngle(axis, angle);
-            _up = ((0, 1, 0, 0) * _rotationQuat).ToVector3F().Normalize();
-            _forward = ((0, 0, 1, 0) * _rotationQuat).ToVector3F().Normalize();
-            _right = ((1, 0, 0, 0) * _rotationQuat).ToVector3F().Normalize();
+            _up = ((Quaternion)(0, 1, 0, 0) * _rotationQuat).ToVector3F().Normalize();
+            _forward = ((Quaternion)(0, 0, 1, 0) * _rotationQuat).ToVector3F().Normalize();
+            _right = ((Quaternion)(1, 0, 0, 0) * _rotationQuat).ToVector3F().Normalize();
             ReCalculateRotation();
         }
     }
