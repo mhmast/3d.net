@@ -2,7 +2,7 @@
 
 namespace _3DNet.Math
 {
-    public class Vector4F : MatrixBase<Vector4F, Scalar, Vector4F>, IVector
+    public class Vector4F : MatrixBase<Vector4F, Scalar, Scalar>, IVector
     {
 
         public Vector4F(params Scalar[] scalars) : base(scalars)
@@ -31,11 +31,11 @@ namespace _3DNet.Math
         public override Vector4F CreateMatrix(params Scalar[] values)
         => new Vector4F(values);
 
-        public override Vector4F CreateColumn(params Scalar[] values)
-        => new Vector4F(values);
+        public override Scalar CreateColumn(params Scalar[] values)
+        => values[0];
 
-        public override Vector4F CreateColumnZeros()
-        => new Vector4F(0,0,0,0);
+        public override Scalar CreateColumnZeros()
+        => 0f;
 
         public override Scalar CreateRow(params Scalar[] values)
         => values[0];
@@ -48,5 +48,6 @@ namespace _3DNet.Math
 
         public override Vector4F CreateMatrixFromRows(params IVector[] rows)
         => new Vector4F(rows[0].Data);
+
     }
 }

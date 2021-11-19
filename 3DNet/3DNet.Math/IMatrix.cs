@@ -17,6 +17,6 @@
         bool Empty();
         IVector Col(int j);
         IVector Row(int j);
-        IVector this[int row] { get;set; }
+        IVector this[int row] { get; }
     }
 }

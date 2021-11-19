@@ -1,6 +1,5 @@
 ﻿namespace _3DNet.Math
 {
-    public interface IVector: IMatrix
-    {
-    }
+    public interface IVector : IMatrix
+    { }
 }

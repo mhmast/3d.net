@@ -8,8 +8,8 @@ namespace _3DNet.Math
 
     public abstract class MatrixBase<TMatrix, TRowVector, TColumnVector> : IMatrix<TMatrix>
         where TMatrix : MatrixBase<TMatrix, TRowVector, TColumnVector>
-        where TRowVector : MatrixBase<TRowVector, Scalar, TRowVector>, IVector
-        where TColumnVector : MatrixBase<TColumnVector, Scalar, TColumnVector>, IVector
+        where TRowVector : MatrixBase<TRowVector, Scalar, Scalar>, IVector
+        where TColumnVector : MatrixBase<TColumnVector, Scalar, Scalar>, IVector
     {
         public MatrixBase(params TRowVector[] rows)
         {
@@ -33,7 +33,7 @@ namespace _3DNet.Math
             }
             IEnumerable<TRowVector> Convert(Scalar[] values)
             {
-                for (int i = 0; i < Cols; i++)
+                for (int i = 0; i < Rows; i++)
                 {
                     yield return CreateRow(values.Skip(i * Cols).Take(Cols).ToArray());
                 }
@@ -43,75 +43,21 @@ namespace _3DNet.Math
 
         private TRowVector[] _rows;
 
-        protected MatrixBase(Scalar value)
-        {
-            _rows = GenerateData(value);
-        }
+        protected MatrixBase(Scalar value) => _rows = GenerateData(value);
 
-        public float SumRange(int startRow, int endRow, int startCol, int endCol)
-        {
-            if (startRow * endRow * startCol * endCol == 0)
-            {
-                return 0;
-            }
-            if (startRow > Rows || startCol > Cols)
-            {
-                return 0;
-            }
+        public float Min() => Data.Min(s => s);
 
-            endRow = System.Math.Min(Rows, endRow);
-            endCol = System.Math.Min(Cols, endCol);
+        public float Max() => Data.Max(s => s);
 
-            var sum = 0.0f;
-            for (var row = startRow; row <= endRow; row++)
-            {
-                for (var col = startCol; col <= endCol; col++)
-                {
-                    sum += this[row][col];
-                }
-            }
-            return sum;
-        }
-
-        public float Min()
-        {
-            var min = float.PositiveInfinity;
-            for (var row = 1; row <= Rows; row++)
-            {
-                for (var col = 1; col <= Cols; col++)
-                {
-                    min = System.Math.Min(min, this[row][col]);
-                }
-            }
-            return min;
-        }
-
-        public float Max()
-        {
-            var max = float.NegativeInfinity;
-            for (var row = 1; row <= Rows; row++)
-            {
-                for (var col = 1; col <= Cols; col++)
-                {
-                    max = System.Math.Max(max, this[row][col]);
-                }
-            }
-            return max;
-        }
-        public TRowVector this[int row]
+        public virtual TRowVector this[int row]
         {
             get => _rows[row];
             set
             => _rows[row] = value;
         }
 
-        public Scalar this[Point pos]
-        {
-            get => this[pos.X][pos.Y];
-            set => this[pos.X][pos.Y] = value;
-        }
 
-        public Scalar[] Data
+        public virtual Scalar[] Data
         {
             get
             {
@@ -158,7 +104,7 @@ namespace _3DNet.Math
         public Point Size
         => new Point(Cols, Rows);
 
-        IVector IMatrix.this[int row] { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        IVector IMatrix.this[int row] { get => this[row]; }
 
         public IVector Col(int col) => Col(_rows, col);
 
@@ -245,8 +191,7 @@ namespace _3DNet.Math
             _rows = GenerateData(val);
         }
 
-        public float SumAll()
-        => SumRange(1, Rows, 1, Cols);
+        public virtual Scalar SumAll() => Data.Sum(s=>s);
         public TMatrix Transpose()
         {
             var newData = new TColumnVector[Cols];
@@ -294,17 +239,16 @@ namespace _3DNet.Math
             {
                 return Copy();
             }
-            var retVal = new IVector[Rows];
+            var retVal = Zeros();
 
-            for (int r = 1; r <= Rows; r++)
+            for (int r = 0; r < Rows; r++)
             {
-                var current = Zeros();
-                for (int c = 1; c <= right.Cols; c++)
+                for (int c = 0; c < right.Cols; c++)
                 {
-                    current[r][c - 1] = @operator(this[r], colSelector(right, r, c));
+                    retVal[r][c] = @operator(this[r], colSelector(right, r, c));
                 }
             }
-            return CreateMatrixFromRows(retVal);
+            return retVal;
         }
 
         //private static T CreateRowVector<T>(Scalar[] data) where T : IVector<T> => (T)Activator.CreateInstance(typeof(T), data);
@@ -335,18 +279,18 @@ namespace _3DNet.Math
                 }
             }
         }
-        private TMatrix Times(IMatrix value) => ProductTemplate( value, (r, i, j) => r.Col(j), (r, c) => r.Times(c).SumAll());
-        private TMatrix Times(Scalar value) => ProductTemplate((TMatrix)null, (r, i, j) => MaskCol<TColumnVector>(i), (r, c) => r.Times(c).SumAll() * value);
-        private TMatrix Times(TColumnVector value) => ProductTemplate(value, (r, i, j) => r, (r, c) => r.Times(c).SumAll());
-        private TMatrix Minus(IMatrix value) => ProductTemplate( value, (r, i, j) => r.Col(j), (r, c) => r.Minus(c).SumAll());
-        private TMatrix Minus(Scalar value) => ProductTemplate((TMatrix)null, (r, i, j) => MaskCol<TColumnVector>(i), (r, c) => r.Minus(c).SumAll() - value);
-        private TMatrix Minus(TColumnVector value) => ProductTemplate(value, (r, i, j) => r, (r, c) => r.Minus(c).SumAll());
-        private TMatrix Div(IMatrix value) => ProductTemplate( value, (r, i, j) => r.Col(j), (r, c) => r.Div(c).SumAll());
-        private TMatrix Div(Scalar value) => ProductTemplate((TMatrix)null, (r, i, j) => MaskCol<TColumnVector>(i), (r, c) => r.Div(c).SumAll() / value);
-        private TMatrix Div(TColumnVector value) => ProductTemplate(value, (r, i, j) => r, (r, c) => r.Div(c).SumAll());
-        private TMatrix Plus(IMatrix value) => ProductTemplate( value, (r, i, j) => r.Col(j), (r, c) => r.Plus(c).SumAll());
-        private TMatrix Plus(Scalar value) => ProductTemplate((TMatrix)null, (r, i, j) => MaskCol<TColumnVector>(i), (r, c) => r.Plus(c).SumAll() + value);
-        private TMatrix Plus(TColumnVector value) => ProductTemplate(value, (r, i, j) => r, (r, c) => r.Plus(c).SumAll());
+        protected virtual TMatrix Times(IMatrix value) => ProductTemplate( value, (r, i, j) => r.Col(j), (r, c) => r.Times(c).SumAll());
+        //protected virtual TMatrix Times(Scalar value) => ProductTemplate(CreateColumnZeros(), (r, i, j) => MaskCol<TColumnVector>(i), (r, c) => r.Times(c).SumAll() * value);
+       // protected virtual TMatrix Times(TColumnVector value) => ProductTemplate(value, (r, i, j) => r, (r, c) => r.Times(c).SumAll());
+        protected virtual TMatrix Minus(IMatrix value) => ProductTemplate( value, (r, i, j) => r.Col(j), (r, c) => r.Minus(c).SumAll());
+        //protected virtual TMatrix Minus(Scalar value) => ProductTemplate(CreateColumnZeros(), (r, i, j) => MaskCol<TColumnVector>(i), (r, c) => r.Minus(c).SumAll() - value);
+        //protected virtual TMatrix Minus(TColumnVector value) => ProductTemplate(value, (r, i, j) => r, (r, c) => r.Minus(c).SumAll());
+        protected virtual TMatrix Div(IMatrix value) => ProductTemplate( value, (r, i, j) => r.Col(j), (r, c) => r.Div(c).SumAll());
+       // protected virtual TMatrix Div(Scalar value) => ProductTemplate(CreateColumnZeros(), (r, i, j) => MaskCol<TColumnVector>(i), (r, c) => r.Div(c).SumAll() / value);
+        //protected virtual TMatrix Div(TColumnVector value) => ProductTemplate(value, (r, i, j) => r, (r, c) => r.Div(c).SumAll());
+        protected virtual TMatrix Plus(IMatrix value) => ProductTemplate( value, (r, i, j) => r.Col(j), (r, c) => r.Plus(c).SumAll());
+        //protected virtual TMatrix Plus(Scalar value) => ProductTemplate(CreateColumnZeros(), (r, i, j) => MaskCol<TColumnVector>(i), (r, c) => r.Plus(c).SumAll() + value);
+        //protected virtual TMatrix Plus(TColumnVector value) => ProductTemplate(value, (r, i, j) => r, (r, c) => r.Plus(c).SumAll());
 
         public TMatrix Zeros() => CreateMatrixFromRows(GenerateDataZero());
 
@@ -360,25 +304,25 @@ namespace _3DNet.Math
             return HashCode.Combine(Rows, Cols, Data);
         }
 
-        public static TMatrix operator *(MatrixBase<TMatrix, TRowVector, TColumnVector> m, Scalar value) => m.Times(value);
+        //public static TMatrix operator *(MatrixBase<TMatrix, TRowVector, TColumnVector> m, Scalar value) => m.Times(value);
         public static TMatrix operator *(MatrixBase<TMatrix, TRowVector, TColumnVector> m, IMatrix value) => m.Times(value);
-        public static TMatrix operator *(MatrixBase<TMatrix, TRowVector, TColumnVector> m, TColumnVector value) => m.Times(value);
+      //  public static TMatrix operator *(MatrixBase<TMatrix, TRowVector, TColumnVector> m, TColumnVector value) => m.Times(value);
         public static TRowVector operator *(TRowVector value, MatrixBase<TMatrix, TRowVector, TColumnVector> m) => value.Times(m);
 
-        public static TMatrix operator -(MatrixBase<TMatrix, TRowVector, TColumnVector> m, Scalar value) => m.Minus(value);
-        public static TMatrix operator -(MatrixBase<TMatrix, TRowVector, TColumnVector> m, TMatrix value) => m.Minus(value);
-        public static TMatrix operator -(MatrixBase<TMatrix, TRowVector, TColumnVector> m, TRowVector value) => m.Minus(value);
-        public static TRowVector operator -(TRowVector value, MatrixBase<TMatrix, TRowVector, TColumnVector> m) => value.Minus(m);
+        //public static TMatrix operator -(MatrixBase<TMatrix, TRowVector, TColumnVector> m, Scalar value) => m.Minus(value);
+        public static TMatrix operator -(MatrixBase<TMatrix, TRowVector, TColumnVector> m, IMatrix value) => m.Minus(value);
+       // public static TMatrix operator -(MatrixBase<TMatrix, TRowVector, TColumnVector> m, TColumnVector value) => m.Minus(value);
+        //public static TRowVector operator -(TRowVector value, MatrixBase<TMatrix, TRowVector, TColumnVector> m) => value.Minus(m);
 
-        public static TMatrix operator /(MatrixBase<TMatrix, TRowVector, TColumnVector> m, Scalar value) => m.Div(value);
-        public static TMatrix operator /(MatrixBase<TMatrix, TRowVector, TColumnVector> m, TMatrix value) => m.Div(value);
-        public static TMatrix operator /(MatrixBase<TMatrix, TRowVector, TColumnVector> m, TRowVector value) => m.Div(value);
-        public static TRowVector operator /(TRowVector value, MatrixBase<TMatrix, TRowVector, TColumnVector> m) => value.Div(m);
+       // public static TMatrix operator /(MatrixBase<TMatrix, TRowVector, TColumnVector> m, Scalar value) => m.Div(value);
+        public static TMatrix operator /(MatrixBase<TMatrix, TRowVector, TColumnVector> m, IMatrix value) => m.Div(value);
+      //  public static TMatrix operator /(MatrixBase<TMatrix, TRowVector, TColumnVector> m, TColumnVector value) => m.Div(value);
+        //public static TRowVector operator /(TRowVector value, MatrixBase<TMatrix, TRowVector, TColumnVector> m) => value.Div(m);
 
-        public static TMatrix operator +(MatrixBase<TMatrix, TRowVector, TColumnVector> m, Scalar value) => m.Plus(value);
-        public static TMatrix operator +(MatrixBase<TMatrix, TRowVector, TColumnVector> m, TMatrix value) => m.Plus(value);
-        public static TMatrix operator +(MatrixBase<TMatrix, TRowVector, TColumnVector> m, TRowVector value) => m.Plus(value);
-        public static TRowVector operator +(TRowVector value, MatrixBase<TMatrix, TRowVector, TColumnVector> m) => value.Plus(m);
+        //public static TMatrix operator +(MatrixBase<TMatrix, TRowVector, TColumnVector> m, Scalar value) => m.Plus(value);
+        public static TMatrix operator +(MatrixBase<TMatrix, TRowVector, TColumnVector> m, IMatrix value) => m.Plus(value);
+       // public static TMatrix operator +(MatrixBase<TMatrix, TRowVector, TColumnVector> m, TColumnVector value) => m.Plus(value);
+        //public static TRowVector operator +(TRowVector value, MatrixBase<TMatrix, TRowVector, TColumnVector> m) => value.Plus(m);
     }
 
 

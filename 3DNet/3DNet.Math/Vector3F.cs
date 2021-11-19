@@ -1,6 +1,6 @@
 ﻿namespace _3DNet.Math
 {
-    public class Vector3F : MatrixBase<Vector3F, Scalar, Vector3F>, IVector
+    public class Vector3F : MatrixBase<Vector3F, Scalar, Scalar>, IVector
     {
         public Vector3F(params Scalar[] values) : base(values)
         {
@@ -38,11 +38,11 @@
         public override Vector3F CreateMatrix(params Scalar[] values)
         => new Vector3F(values);
 
-        public override Vector3F CreateColumn(params Scalar[] values)
-        => new Vector3F(values);
+        public override Scalar CreateColumn(params Scalar[] values)
+        => values[0];
 
-        public override Vector3F CreateColumnZeros()
-        => new Vector3F(0);
+        public override Scalar CreateColumnZeros()
+        => 0f;
 
         public override Scalar CreateRow(params Scalar[] values)
         => values[0];
