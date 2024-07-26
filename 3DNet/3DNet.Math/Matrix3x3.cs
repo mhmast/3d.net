@@ -66,10 +66,10 @@ namespace _3DNet.Math
         public override Vector3F CreateRowZeros()
         => new Vector3F(0, 0, 0);
 
-        public override Matrix3x3 CreateMatrixFromColumns(params IVector[] cols)
+        public override Matrix3x3 CreateMatrixFromColumns(params IMatrix[] cols)
         => new Matrix3x3(cols.SelectMany(c=>c.Data).ToArray()).Transpose();
 
-        public override Matrix3x3 CreateMatrixFromRows(params IVector[] rows)
+        public override Matrix3x3 CreateMatrixFromRows(params IMatrix[] rows)
          => new Matrix3x3(rows.SelectMany(c => c.Data).ToArray());
     }
 }

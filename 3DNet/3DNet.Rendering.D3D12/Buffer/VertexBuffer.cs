@@ -1,10 +1,7 @@
 ﻿using _3DNet.Engine.Rendering;
-using _3DNet.Engine.Rendering.Buffer;
 using _3DNet.Rendering.Buffer;
 using SharpDX.Direct3D12;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.InteropServices;
 using Device = SharpDX.Direct3D12.Device;
 
@@ -12,27 +9,34 @@ using Device = SharpDX.Direct3D12.Device;
 namespace _3DNet.Rendering.D3D12.Buffer
 {
 
-    internal abstract class VertexBuffer : IBuffer
+    internal unsafe class VertexBuffer<T> : IBuffer where T : struct
     {
 
-        public VertexBuffer(Device device, IVertex[] data)
+        public VertexBuffer(Device device, string name,T[] data)
         {
             if (data.Length == 0) throw new ArgumentException("Vertex length cannot be 0");
-            _structSize = data[0].RawBuffer.Length;
-            _bufferSize = _structSize * data.Length;
+            _structSize = Marshal.SizeOf(data[0]);
+            _bufferCount = data.Length;
+            _bufferSize = _structSize * _bufferCount;
             _vertexBuffer = device.CreateCommittedResource(new HeapProperties(HeapType.Upload), HeapFlags.None, ResourceDescription.Buffer(_bufferSize), ResourceStates.GenericRead);
+            _vertexBuffer.Name = $"vrtxbffr_${name}";
             var pVertexDataBegin = _vertexBuffer.Map(0);
-            foreach (var buffer in data.Select(v => v.RawBuffer))
+            foreach (var buffer in data)
             {
-                Marshal.Copy(buffer, 0, pVertexDataBegin, buffer.Length);
-                pVertexDataBegin += data.Length;
+                var handle = GCHandle.Alloc(buffer, GCHandleType.Pinned);
+                System.Buffer.MemoryCopy((void*)handle.AddrOfPinnedObject(), (void*)pVertexDataBegin, _structSize,_structSize);
+                handle.Free();
+                pVertexDataBegin += _structSize;
             }
             _vertexBuffer.Unmap(0);
 
         }
         private Resource _vertexBuffer;
-        private int _structSize;
-        private int _bufferSize;
+        private readonly int _structSize;
+        private readonly int _bufferSize;
+        private readonly int _bufferCount;
+
+        public int Count =>_bufferCount;
 
         public void Load(IRenderWindowContext context) => context.SetVertexBuffer(new IntPtr(_vertexBuffer.GPUVirtualAddress), _bufferSize, _structSize);
 
@@ -52,23 +56,5 @@ namespace _3DNet.Rendering.D3D12.Buffer
             GC.SuppressFinalize(this);
         }
     }
-    internal class VertexBuffer<T> : VertexBuffer
-        where T : IVertex
-    {
-        private static GCHandle _handle;
-
-        public VertexBuffer(Device device, IEnumerable<T> data) : base(device, data.Cast<IVertex>().ToArray())
-        {
-
-        }
-        protected override void Dispose(bool disposing)
-        {
-            base.Dispose(disposing);
-            if (disposing)
-            {
-                _handle.Free();
-            }
-        }
-
-    }
+   
 }

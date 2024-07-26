@@ -1,6 +1,6 @@
 ﻿namespace _3DNet.Math
 {
-    public class Vector3F : MatrixBase<Vector3F, Scalar, Scalar>, IVector
+    public class Vector3F : MatrixBase<Vector3F, Scalar, Scalar>, IMatrix
     {
         public Vector3F(params Scalar[] values) : base(values)
         {
@@ -50,10 +50,10 @@
         public override Scalar CreateRowZeros()
         =>0f;
 
-        public override Vector3F CreateMatrixFromColumns(params IVector[] cols)
+        public override Vector3F CreateMatrixFromColumns(params IMatrix[] cols)
         => new Vector3F(cols[0].Data);
 
-        public override Vector3F CreateMatrixFromRows(params IVector[] rows)
+        public override Vector3F CreateMatrixFromRows(params IMatrix[] rows)
         => new Vector3F(rows[0].Data);
 
         public static implicit operator Vector3F((float, float, float) vals)

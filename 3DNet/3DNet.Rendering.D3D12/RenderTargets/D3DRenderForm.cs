@@ -1,10 +1,11 @@
 ﻿using _3DNet.Engine.Rendering;
-using _3DNet.Math;
 using _3DNet.Rendering.D3D12.RenderTargets;
 using SharpDX.Direct3D12;
 using SharpDX.DXGI;
+using SharpDX.Mathematics.Interop;
 using System;
 using System.Drawing;
+using System.Numerics;
 using System.Windows.Forms;
 
 namespace _3DNet.Rendering.D3D12
@@ -29,7 +30,9 @@ namespace _3DNet.Rendering.D3D12
         private CpuDescriptorHandle _depthStencilView;
         private bool _buffer1Reset = true;
         private bool _buffer2Reset = true;
-        
+        private RawViewportF _viewport;
+        private RawRectangle _scissorRect;
+
         public Matrix4x4 Projection { get; private set; }
 
         public Format Format => _swapChainDescription.ModeDescription.Format;
@@ -170,7 +173,7 @@ namespace _3DNet.Rendering.D3D12
             {
                 ResizeSwapchainResources();
             }
-            Projection = Matrix4x4.PerspectiveFovLH((float)System.Math.PI / 4f, Width / Height, 5, 500);
+            Projection = Matrix4x4.CreatePerspectiveFieldOfView((float)Math.PI / 4f, Width / Height, 1, 500); ;
         }
 
         private void ResizeSwapchainResources()
@@ -196,30 +199,34 @@ namespace _3DNet.Rendering.D3D12
             var depthStencilBufferDesc = ResourceDescription.Texture2D(Format.D32_Float, ClientSize.Width, ClientSize.Height, flags: ResourceFlags.AllowDepthStencil);
             ClearValue? clearValue = new()
             {
-                Color = new SharpDX.Mathematics.Interop.RawVector4(0, 0, 0, 0),
+                Color = new RawVector4(0, 0, 0, 0),
                 DepthStencil = new DepthStencilValue { Depth = 1, Stencil = 5 },
                 Format = Format.D32_Float
             };
             _depthStencilBuffer = _engine.CreateCommittedResource(new HeapProperties(HeapType.Default), HeapFlags.None, depthStencilBufferDesc, ResourceStates.DepthWrite, clearValue);
             _depthStencilBuffer.Name = $"dsb_{Name}";
             _engine.CreateDepthStencilView(_depthStencilBuffer, null, _depthStencilView);
+
+            _viewport = new RawViewportF { X = 0, Y = 0, Width = Width, Height = Height, MinDepth = 0, MaxDepth = 1 };
+            _scissorRect = new RawRectangle { Left = 0, Top = 0, Right = Width, Bottom = Height };
         }
 
         public void Present()
         {
-            _swapChain.Present(0, PresentFlags.None);
+            _swapChain.Present(1, PresentFlags.None);
+            Application.DoEvents();
         }
 
 
         public void Begin(D3DRenderWindowContext context)
         {
-            
-            if(_buffer1Reset && _activeBackBuffer == _backBuffer1)
+
+            if (_buffer1Reset && _activeBackBuffer == _backBuffer1)
             {
                 context.ResourceBarrierTransition(_backBuffer1, ResourceStates.Common, ResourceStates.RenderTarget);
                 _buffer1Reset = false;
             }
-            else if(_buffer2Reset && _activeBackBuffer == _backBuffer2)
+            else if (_buffer2Reset && _activeBackBuffer == _backBuffer2)
             {
                 context.ResourceBarrierTransition(_backBuffer2, ResourceStates.Common, ResourceStates.RenderTarget);
                 _buffer2Reset = false;
@@ -229,7 +236,9 @@ namespace _3DNet.Rendering.D3D12
                 context.ResourceBarrierTransition(_activeBackBuffer, ResourceStates.Present, ResourceStates.RenderTarget);
             }
             _engine.CreateRenderTargetView(_activeBackBuffer, null, _renderView);
-            context.SetProjection(Projection);
+            context.SetViewport(_viewport);
+            context.SetScissorRect(_scissorRect);
+            //context.SetProjection(Projection);
         }
 
         public void End(D3DRenderWindowContext context)

@@ -1,9 +1,12 @@
 ﻿using _3DNet.Engine.Rendering;
-using _3DNet.Math;
+using _3DNet.Rendering.Buffer;
+using SharpDX.Direct3D;
 using SharpDX.Direct3D12;
+using SharpDX.Mathematics.Interop;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Numerics;
 using System.Threading;
 using System.Windows.Forms;
 
@@ -19,6 +22,7 @@ namespace _3DNet.Rendering.D3D12
         private readonly IEnumerable<ID3DObject> _d3DObjects;
         private readonly D3DRenderForm _d3DRenderForm;
         private bool _disposing;
+        private Fence _fence;
 
         public D3DRenderWindowContext(Device device, CommandAllocator commandAllocator, CommandQueue commandQueue, IEnumerable<ID3DObject> d3DObjects, D3DRenderForm d3DRenderForm)
         {
@@ -29,6 +33,7 @@ namespace _3DNet.Rendering.D3D12
             _d3DRenderForm = d3DRenderForm;
             _d3DRenderForm.Disposed += (_, __) => Dispose();
             _d3DRenderForm.FormClosed += (_, __) => _d3DRenderForm.Dispose();
+            _fence = _d3DDevice.CreateFence(0, FenceFlags.None);
         }
 
         public IRenderWindow RenderWindow => _d3DRenderForm;
@@ -38,7 +43,7 @@ namespace _3DNet.Rendering.D3D12
         public Matrix4x4 Projection { get; private set; } = Matrix4x4.Identity;
         public Matrix4x4 World { get; private set; } = Matrix4x4.Identity;
 
-        public bool BeginScene(Color backgroundColor)
+        public bool BeginScene(Color backgroundColor,long ms)
         {
             Application.DoEvents();
 
@@ -58,7 +63,7 @@ namespace _3DNet.Rendering.D3D12
         public void ClearDepthStencilView(IntPtr ptr, float depth, byte stencil) => _commandQueue.Enqueue(c => c.ClearDepthStencilView(new CpuDescriptorHandle { Ptr = ptr }, ClearFlags.FlagsDepth | ClearFlags.FlagsStencil, depth, stencil));
 
         public void ClearRenderTargetView(IntPtr ptr, Color clearColor)
-        => _commandQueue.Enqueue(c => c.ClearRenderTargetView(new CpuDescriptorHandle { Ptr = ptr }, new SharpDX.Mathematics.Interop.RawColor4(clearColor.R, clearColor.G, clearColor.B, clearColor.A)));
+        => _commandQueue.Enqueue(c => c.ClearRenderTargetView(new CpuDescriptorHandle { Ptr = ptr }, new RawColor4(clearColor.R, clearColor.G, clearColor.B, clearColor.A)));
 
         public void Dispose()
         {
@@ -68,18 +73,17 @@ namespace _3DNet.Rendering.D3D12
             {
                 _d3DRenderForm.Dispose();
             }
+            _fence.Dispose();
             _disposing = false;
             IsDisposed = true;
         }
 
-        public void EndScene()
+        public void EndScene(long ms)
         {
             foreach (var d3DObject in _d3DObjects)
             {
                 d3DObject.End(this);
             }
-            var fence = _d3DDevice.CreateFence(0, FenceFlags.None);
-            fence.SetEventOnCompletion(1, _renderHandle.SafeWaitHandle.DangerousGetHandle());
             var commandList = _d3DDevice.CreateCommandList(CommandListType.Direct, _d3DCommandAllocator, null);
             while (_commandQueue.Count > 0)
             {
@@ -88,9 +92,13 @@ namespace _3DNet.Rendering.D3D12
             commandList.Close();
             _d3DCommandQueue.ExecuteCommandList(commandList);
             _d3DRenderForm.Present();
-            _d3DCommandQueue.Signal(fence, 1);
-            _renderHandle.WaitOne();
-            fence.Dispose();
+            _d3DCommandQueue.Signal(_fence, ms);
+            if (_fence.CompletedValue < ms)
+            {
+                _fence.SetEventOnCompletion(ms, _renderHandle.SafeWaitHandle.DangerousGetHandle());
+                _renderHandle.WaitOne();
+            }
+            
         }
 
         public void SetIndexBuffer(IntPtr bufferLocation, int sizeInBytes, int strideInBytes)
@@ -117,6 +125,9 @@ namespace _3DNet.Rendering.D3D12
         internal void ResourceBarrierTransition(Resource buffer, ResourceStates oldState, ResourceStates newState)
        => _commandQueue.Enqueue(c => c.ResourceBarrierTransition(buffer, oldState, newState));
 
+        internal void SetPrimitiveTopology(PrimitiveTopology topology)
+        => _commandQueue.Enqueue(c => c.PrimitiveTopology = topology);
+
         internal void SetPipelineState(PipelineState graphicsPipelineState)
         => _commandQueue.Enqueue(c => c.PipelineState = graphicsPipelineState);
 
@@ -124,9 +135,19 @@ namespace _3DNet.Rendering.D3D12
         => _commandQueue.Enqueue(c => c.SetGraphicsRootConstantBufferView(slot, address.ToInt64()));
 
         internal void SetGraphicsRootSignature(RootSignature rootSignature)
-        => _commandQueue.Enqueue(c=>c.SetGraphicsRootSignature(rootSignature));
+        => _commandQueue.Enqueue(c => c.SetGraphicsRootSignature(rootSignature));
 
         public void QueueAction(Action a)
-        => _commandQueue.Enqueue(c=>a());
+        => _commandQueue.Enqueue(c => a());
+
+        public void Draw(IBuffer vertexBuffer, IBuffer indexBuffer)
+        {
+            vertexBuffer.Load(this);
+            indexBuffer.Load(this);
+            _commandQueue.Enqueue(c => c.DrawIndexedInstanced(indexBuffer.Count, 1, 0, 0, 0));
+        }
+
+        internal void SetScissorRect(RawRectangle scissorRect) => _commandQueue.Enqueue(c => c.SetScissorRectangles(scissorRect));
+        internal void SetViewport(RawViewportF viewport) => _commandQueue.Enqueue(c => c.SetViewport(viewport));
     }
 }

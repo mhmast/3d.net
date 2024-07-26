@@ -6,7 +6,6 @@ using SharpDX.Direct3D;
 using SharpDX.Direct3D12;
 using System.Collections.Generic;
 using _3DNet.Rendering.D3D12.Buffer;
-using _3DNet.Engine.Rendering.Buffer;
 using System;
 using _3DNet.Rendering.D3D12.RenderTargets;
 using System.Linq;
@@ -16,7 +15,7 @@ using System.IO;
 
 namespace _3DNet.Rendering.D3D12
 {
-    internal class D3DRenderEngine : IRenderEngine ,IShaderFactory
+    internal class D3DRenderEngine : IRenderEngine, IShaderFactory
     {
         private readonly DriverType _driverType = DriverType.Warp;
         private Device _device;
@@ -55,7 +54,7 @@ namespace _3DNet.Rendering.D3D12
                 _activeTargets.Remove(name);
                 RenderTargetDropped?.DynamicInvoke();
             };
-            form.Activated += (_, __) => RenderTargetCreated?.DynamicInvoke();
+            form.Load += (_, __) => RenderTargetCreated?.DynamicInvoke();
             form.Show();
 
             return form;
@@ -90,10 +89,9 @@ namespace _3DNet.Rendering.D3D12
         {
 #if DEBUG
             // Enable the D3D12 debug layer.
-            {
-                DebugInterface.Get().EnableDebugLayer();
 
-            }
+            DebugInterface.Get().EnableDebugLayer();
+
 #endif
             using var factory = new Factory4();
             var adapter = _driverType == DriverType.Hardware ? null : factory.GetWarpAdapter();
@@ -101,24 +99,19 @@ namespace _3DNet.Rendering.D3D12
             _commandQueue = _device.CreateCommandQueue(new CommandQueueDescription(CommandListType.Direct));
             _commandAllocator = _device.CreateCommandAllocator(CommandListType.Direct);
             var defaultShaderDescription = new ShaderDescription(Path.Combine(_basePath, "Shaders", "default.hlsl"), "vs_5_0", "VSMain", "ps_5_0", "PSMain");
-            defaultShaderDescription.Buffers.Add(new ShaderBufferDescription(0,BufferType.GPUInput,sizeof(float)*16*3,BufferUsage.VertexShader,GetWVPData));
+            defaultShaderDescription.Buffers.Add(new ShaderBufferDescription(0, BufferType.GPUInput, sizeof(float) * 16, BufferUsage.VertexShader, GetWVPData));
             DefaultShader = LoadShader("Default", defaultShaderDescription);
 
         }
 
-        private byte[] GetWVPData(IRenderWindowContext context)
-        {
-            var floats = context.World.Data;// (context.World * context.View* context.Projection).Data;
-            var bytes = new byte[floats.Length*sizeof(float)];
-            System.Buffer.BlockCopy(floats, 0, bytes, 0, bytes.Length);
-            return bytes;
-        }
+        private object GetWVPData(IRenderWindowContext context)
+        => context.World * context.View * context.Projection;
 
         internal RootSignature CreateRootSignature(Blob byteCode) => _device.CreateRootSignature(byteCode);
 
-        public IndexBuffer CreateIndexBuffer(IEnumerable<int> data) => new(_device, data);
+        public IndexBuffer CreateIndexBuffer(string name, IEnumerable<int> data) => new(_device, name, data);
 
-        public VertexBuffer<T> CreateVertexBuffer<T>(IEnumerable<T> data) where T : IVertex => new(_device, data);
+        public VertexBuffer<T> CreateVertexBuffer<T>(string name, IEnumerable<T> data) where T : struct => new(_device, name, data.ToArray());
 
 
         internal PipelineState CreateGraphicsPipelineState(GraphicsPipelineStateDescription gpsDesc) => _device.CreateGraphicsPipelineState(gpsDesc);

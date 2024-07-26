@@ -3,6 +3,7 @@ using _3DNet.Engine.Rendering;
 using _3DNet.Engine.Rendering.Model;
 using _3DNet.Engine.Scene;
 using System.Drawing;
+using System.Numerics;
 
 namespace _3DNet.Console
 {
@@ -30,12 +31,20 @@ namespace _3DNet.Console
             _scene.BackgroundColor = Color.Red;
             _engine.SetActiveContext(_context);
             _engine.SetActiveScene(_scene);
-            var cube = _scene.CreateStandardObject("cube",_modelFactory.CreateCube(10, 10, 10));
-            cube.MoveTo((0, 0, 20));
+            var cubeModel = _modelFactory.CreateCube("cube", 10, 10, 10);
+            //var cube = _scene.CreateStandardObject("cubez+",cubeModel);
+            //cube.MoveTo(new Vector3(0, 0, 100));
+
+            //_scene.CreateStandardObject("cubez-", cubeModel ).MoveTo(new Vector3(0,0,-100));
+            _scene.CreateStandardObject("cubex+", cubeModel ).MoveTo(new Vector3(100,0,0));
+            //_scene.CreateStandardObject("cubex-", cubeModel ).MoveTo(new Vector3(-100,0,0));
+            //_scene.CreateStandardObject("cubey+", cubeModel ).MoveTo(new Vector3(0,100,0));
+            //_scene.CreateStandardObject("cubey-", cubeModel ).MoveTo(new Vector3(0,-100,0));
+
             var cam = _scene.CreateStandardCamera("defaultcam");
             _scene.SetActiveCamera(cam);
-            cam.MoveTo((0, 0, 0));
-            cam.LookAt(cube);
+            cam.MoveTo(new Vector3(0, 0, 0));
+            //cam.LookAt(cube);
         }
 
         public void Start()

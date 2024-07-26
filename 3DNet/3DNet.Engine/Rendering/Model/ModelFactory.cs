@@ -14,33 +14,61 @@ namespace _3DNet.Engine.Rendering.Model
         {
             _shaderFactory = shaderFactory;
         }
-    
-        protected IEnumerable<IVertex> CreateCubeVertices(float width, float height, float depth)
+
+        protected IEnumerable<PositionOnlyVertex> CreateCubeVertices(float width, float height, float depth)
         => new PositionOnlyVertex[]
             {
-                (-width/2,height/2,-depth-2) , (width/2,height/2,-depth-2),(-width/2,-height/2,-depth-2) , (width/2,-height/2,-depth-2),
-                (-width/2,height/2,depth-2) , (width/2,height/2,depth-2),(-width/2,-height/2,depth-2) , (width/2,-height/2,depth-2)
-            }.Cast<IVertex>();
-        
+                /*Front
+                 *        4-------------5
+                 *   0----|-------1     |
+                 *   |    |       |     |
+                 *   |    6-------|-----7
+                 *   2------------3
+                 *
+                 *Back
+                 *        1-------------0
+                 *   5----|-------4     |
+                 *   |    |       |     |
+                 *   |    3-------|-----2
+                 *   7------------6
+                 *
+                 *Left
+                 *        5-------------1
+                 *   4----|-------0     |
+                 *   |    |       |     |
+                 *   |    7-------|-----3
+                 *   6------------2
+                 *Right
+                 *        0-------------4
+                 *   1----|-------5     |
+                 *   |    |       |     |
+                 *   |    2-------|-----6
+                 *   3------------7
+                 */
+                
+                (-width/2,height/2,-depth/2) , (width/2,height/2,-depth/2),(-width/2,-height/2,-depth/2) , (width/2,-height/2,-depth/2),
+                (-width/2,height/2,depth/2) , (width/2,height/2,depth/2),(-width/2,-height/2,depth/2) , (width/2,-height/2,depth/2)
+            };
+
         protected int[] CreateCubeIndices()
-        => new []
+        => new[]
             {
                 //front
-                0,1,2,0,2,3,
+                0,1,3,0,3,2,
                 //left
-                4,0,3,4,3,6,
+                4,0,2,4,2,6,
                 //back
-                5,4,7,5,7,6,
+                5,4,6,5,6,7,
                 //right
                 1,5,7,1,7,3,
                 //top
-                4,1,0,4,5,1,
+                4,5,1,4,1,0,
                 //bottom
-                2,6,7,2,6,3
+                2,3,7,2,7,6
             };
-        public IModel CreateCube(float width, float height, float depth)
-          => new SimpleModel(CreateVertexBuffer(CreateCubeVertices(width, height, depth).ToArray()), CreateIndexBuffer(CreateCubeIndices()), _shaderFactory.DefaultShader);
-        protected abstract IBuffer CreateIndexBuffer(int[] indices);
-        protected abstract IBuffer CreateVertexBuffer(IVertex[] vertices);
+        public IModel CreateCube(string name, float width, float height, float depth)
+          => new SimpleModel(CreateVertexBuffer(name, CreateCubeVertices(width, height, depth).ToArray()), CreateIndexBuffer(name, CreateCubeIndices()), _shaderFactory.DefaultShader);
+        protected abstract IBuffer CreateIndexBuffer(string name, int[] indices);
+        protected abstract IBuffer CreateVertexBuffer<T>(string name, IEnumerable<T> vertices) where T : struct;
     }
 }

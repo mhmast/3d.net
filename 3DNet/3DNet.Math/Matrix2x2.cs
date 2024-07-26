@@ -35,10 +35,10 @@ namespace _3DNet.Math
         public override Matrix2x2 CreateMatrix(params Scalar[] values)
         => new Matrix2x2(values);
 
-        public override Matrix2x2 CreateMatrixFromColumns(params IVector[] cols)
+        public override Matrix2x2 CreateMatrixFromColumns(params IMatrix[] cols)
         => new Matrix2x2(cols.SelectMany(cols => cols.Data).ToArray()).Transpose();
 
-        public override Matrix2x2 CreateMatrixFromRows(params IVector[] rows)
+        public override Matrix2x2 CreateMatrixFromRows(params IMatrix[] rows)
         => new Matrix2x2(rows.SelectMany(cols => cols.Data).ToArray());
 
         public override Vector2F CreateRow(params Scalar[] values)

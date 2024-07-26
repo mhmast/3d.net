@@ -1,10 +1,12 @@
 ﻿using System;
+using System.Linq;
 using static System.Math;
 
 namespace _3DNet.Math
 {
     public class Matrix4x4 : MatrixBase<Matrix4x4, Vector4F,Vector4F>
     {
+        public Matrix4x4(params Scalar[] values) : base(values) { }
         public Matrix4x4(params Vector4F[] rows) : base(rows)
         {
         }
@@ -38,38 +40,24 @@ namespace _3DNet.Math
         => 1f / (float)Tan(v);
 
         public override Matrix4x4 CreateMatrix(params Scalar[] values)
-        {
-            throw new NotImplementedException();
-        }
+        => new Matrix4x4(values);
 
         public override Vector4F CreateColumn(params Scalar[] values)
-        {
-            throw new NotImplementedException();
-        }
+        => new Vector4F(values);
 
         public override Vector4F CreateColumnZeros()
-        {
-            throw new NotImplementedException();
-        }
+        =>(0,0,0,0);
 
         public override Vector4F CreateRow(params Scalar[] values)
-        {
-            throw new NotImplementedException();
-        }
+        => new Vector4F(values);
 
         public override Vector4F CreateRowZeros()
-        {
-            throw new NotImplementedException();
-        }
+        => (0,0,0,0);
 
-        public override Matrix4x4 CreateMatrixFromColumns(params IVector[] cols)
-        {
-            throw new NotImplementedException();
-        }
+        public override Matrix4x4 CreateMatrixFromColumns(params IMatrix[] cols)
+        => new Matrix4x4(cols.SelectMany(c=>c.Data).ToArray()).Transpose();
 
-        public override Matrix4x4 CreateMatrixFromRows(params IVector[] rows)
-        {
-            throw new NotImplementedException();
-        }
+        public override Matrix4x4 CreateMatrixFromRows(params IMatrix[] rows)
+        => new Matrix4x4(rows.SelectMany(r => r.Data).ToArray());
     }
 }

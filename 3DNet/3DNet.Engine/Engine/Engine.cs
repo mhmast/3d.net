@@ -1,6 +1,7 @@
 ﻿using _3DNet.Engine.Rendering;
 using _3DNet.Engine.Scene;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace _3DNet.Engine.Engine
 {
@@ -34,6 +35,8 @@ namespace _3DNet.Engine.Engine
                 return;
             }
             _running = true;
+            var sw = new Stopwatch();
+            sw.Start();
             while (_running)
             {
                 foreach (var scene in _scenes.Values)
@@ -43,9 +46,10 @@ namespace _3DNet.Engine.Engine
                 if (!_context.IsDisposed)
                 {
                     
-                    _activeScene.Render(_context);
+                    _activeScene.Render(_context,sw.ElapsedMilliseconds);
                 }
             }
+            sw.Stop();
         }
 
         public void Stop() => _running = false;

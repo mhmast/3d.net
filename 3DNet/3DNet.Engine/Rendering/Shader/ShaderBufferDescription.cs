@@ -4,7 +4,7 @@ namespace _3DNet.Engine.Rendering.Shader
 {
     public class ShaderBufferDescription
     {
-        public ShaderBufferDescription(int slot, BufferType type, int sizeInBytes,BufferUsage bufferUsage,Func<IRenderWindowContext,byte[]> data)
+        public ShaderBufferDescription(int slot, BufferType type, int sizeInBytes,BufferUsage bufferUsage,Func<IRenderWindowContext,object> data)
         {
             Slot = slot;
             Type = type;
@@ -16,6 +16,7 @@ namespace _3DNet.Engine.Rendering.Shader
         public BufferType Type { get; }
         public int SizeInBytes { get; }
         public BufferUsage BufferUsage { get;}
-        public Func<IRenderWindowContext, byte[]> Data { get; }
+        public Func<IRenderWindowContext, object> Data { get; }
+
     }
 }

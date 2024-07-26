@@ -2,7 +2,7 @@
 
 namespace _3DNet.Math
 {
-    public class Vector2F : MatrixBase<Vector2F, Scalar, Scalar>, IVector
+    public class Vector2F : MatrixBase<Vector2F, Scalar, Scalar>, IMatrix
     {
         public Vector2F(params Scalar[] rows) : base(rows)
         {
@@ -28,10 +28,10 @@ namespace _3DNet.Math
         public override Vector2F CreateMatrix(params Scalar[] values)
         => new Vector2F(values);
 
-        public override Vector2F CreateMatrixFromColumns(params IVector[] cols)
+        public override Vector2F CreateMatrixFromColumns(params IMatrix[] cols)
         => new Vector2F(cols[0].Data);
 
-        public override Vector2F CreateMatrixFromRows(params IVector[] rows)
+        public override Vector2F CreateMatrixFromRows(params IMatrix[] rows)
         => new Vector2F(rows.SelectMany(r=>r.Data).ToArray());
 
         public override Scalar CreateRow(params Scalar[] values)

@@ -8,7 +8,7 @@ namespace _3DNet.Engine.Scene
 {
     internal class Scene : IScene
     {
-        private readonly Dictionary<string,ISceneObject> _createdObjects = new();
+        private readonly Dictionary<string, ISceneObject> _createdObjects = new();
         private StandardCamera _activeCamera;
 
         private string Name { get; }
@@ -18,7 +18,7 @@ namespace _3DNet.Engine.Scene
             Name = name;
         }
 
-      
+
         public Color BackgroundColor { get; set; }
 
         private void CheckSceneObjectOrThrow(string name)
@@ -29,18 +29,18 @@ namespace _3DNet.Engine.Scene
             }
         }
 
-        public ISceneObject CreateStandardObject(string name,IModel model)
+        public ISceneObject CreateStandardObject(string name, IModel model)
         {
             CheckSceneObjectOrThrow(name);
-            var obj = new StandardSceneObject(this,name, model);
-            _createdObjects.Add(name,obj);
+            var obj = new StandardSceneObject(this, name, model);
+            _createdObjects.Add(name, obj);
             return obj;
         }
 
-        public void Render(IRenderWindowContext context)
+        public void Render(IRenderWindowContext context, long ms)
         {
-            bool success = context.BeginScene(BackgroundColor);
-            if(!success)
+            bool success = context.BeginScene(BackgroundColor, ms);
+            if (!success)
             {
                 return;
             }
@@ -48,7 +48,7 @@ namespace _3DNet.Engine.Scene
             {
                 obj.Render(context);
             }
-            context.EndScene();
+            context.EndScene(ms);
         }
 
         public void Update()
@@ -59,7 +59,7 @@ namespace _3DNet.Engine.Scene
         public ICamera CreateStandardCamera(string name)
         {
             var obj = new StandardCamera(this, name);
-            _createdObjects.Add(name,obj);
+            _createdObjects.Add(name, obj);
             _activeCamera = _activeCamera ?? obj;
             return obj;
         }

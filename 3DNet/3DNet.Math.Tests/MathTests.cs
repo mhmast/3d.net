@@ -18,7 +18,7 @@ namespace _3DNet.Math.Tests
             mat.Data.Length.Should().Be(4);
         }
 
-        class BSVector : MatrixBase<BSVector, Scalar, Scalar>, IVector
+        class BSVector : MatrixBase<BSVector, Scalar, Scalar>
         {
             public BSVector() : base(new Scalar[0])
             {
@@ -39,11 +39,11 @@ namespace _3DNet.Math.Tests
             => new BSVector();
 
 
-            public override BSVector CreateMatrixFromColumns(params IVector[] cols)
+            public override BSVector CreateMatrixFromColumns(params IMatrix[] cols)
             => new BSVector();
 
 
-            public override BSVector CreateMatrixFromRows(params IVector[] rows)
+            public override BSVector CreateMatrixFromRows(params IMatrix[] rows)
             => new BSVector();
 
 
@@ -79,10 +79,10 @@ namespace _3DNet.Math.Tests
             => new BSMatrix();
 
 
-            public override BSMatrix CreateMatrixFromColumns(params IVector[] cols)
+            public override BSMatrix CreateMatrixFromColumns(params IMatrix[] cols)
             => new BSMatrix();
 
-            public override BSMatrix CreateMatrixFromRows(params IVector[] rows)
+            public override BSMatrix CreateMatrixFromRows(params IMatrix[] rows)
             => new BSMatrix();
 
             public override BSVector CreateRow(params Scalar[] values)
@@ -231,6 +231,14 @@ namespace _3DNet.Math.Tests
             var mat = new Matrix2x2((1, 2f), (3, 4f));
             var mul = mat * new Matrix2x2((1, 2f), (3, 4f));
             mul.Data.SequenceEqual(new Scalar[] { 1f, 4, 9, 16 }).Should().BeTrue();
+        }
+
+        [Test]
+        public void Vector_Div_Should_Div()
+        {
+            var mat = new Vector2F(1, 2f);
+            var div = mat / (Scalar)2f;
+            div.Data.SequenceEqual(new Scalar[] { 0.5f, 1}).Should().BeTrue();
         }
 
         [Test]

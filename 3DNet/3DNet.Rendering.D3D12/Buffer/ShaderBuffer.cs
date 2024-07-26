@@ -7,10 +7,12 @@ using System.Runtime.InteropServices;
 
 namespace _3DNet.Rendering.D3D12.Buffer
 {
-    internal class ShaderBuffer : IBuffer
+    internal unsafe class ShaderBuffer : IBuffer
     {
         private readonly Resource _buffer;
         private readonly ShaderBufferDescription _bufferDesc;
+
+        public int Count { get; private set; }
 
         public ShaderBuffer(string name, D3DRenderEngine d3DRenderEngine, DescriptorHeap shaderHeap, ShaderBufferDescription bufferDesc)
         {
@@ -25,6 +27,7 @@ namespace _3DNet.Rendering.D3D12.Buffer
                 SizeInBytes = realSize
             };
             d3DRenderEngine.CreateConstantBufferView(cbvDesc, shaderHeap.CPUDescriptorHandleForHeapStart);
+
         }
 
         private ResourceStates GetResourceState(BufferUsage bufferUsage)
@@ -68,7 +71,11 @@ namespace _3DNet.Rendering.D3D12.Buffer
             {
                 var addr = _buffer.Map(0);
                 var data = _bufferDesc.Data(context);
-                Marshal.Copy(data, 0, addr, data.Length);
+                Count = data is Array a ? a.Length : 1;
+                var dataSize = Marshal.SizeOf(data);
+                var handle = GCHandle.Alloc(data, GCHandleType.Pinned);
+                System.Buffer.MemoryCopy((void*)handle.AddrOfPinnedObject(), (void*)addr, dataSize, dataSize);
+                handle.Free();
                 _buffer.Unmap(0);
             });
             context.LoadShaderBuffer(_bufferDesc.Slot, new IntPtr(_buffer.GPUVirtualAddress));

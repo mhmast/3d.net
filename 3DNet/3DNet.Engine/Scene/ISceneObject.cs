@@ -1,5 +1,5 @@
 ﻿using _3DNet.Engine.Rendering;
-using _3DNet.Math;
+using System.Numerics;
 
 namespace _3DNet.Engine.Scene
 {
@@ -7,15 +7,15 @@ namespace _3DNet.Engine.Scene
     {
         string Name { get; }
         IScene Scene { get; }
-        Vector3F Position { get;  }
-        Vector3F Forward { get;  }
-        Vector3F Up { get;  }
-        Vector3F Right { get;  }
+        Vector3 Position { get;  }
+        Vector3 Forward { get;  }
+        Vector3 Up { get;  }
+        Vector3 Right { get;  }
 
-        void MoveForward(Vector3F relativeAmount);
-        void MoveTo(Vector3F position);
+        void MoveForward(Vector3 relativeAmount);
+        void MoveTo(Vector3 position);
 
-        void Rotate(Vector3F axis,float angle);
+        void Rotate(Vector3 axis,float angle);
 
         void Render(IRenderWindowContext context);
     }

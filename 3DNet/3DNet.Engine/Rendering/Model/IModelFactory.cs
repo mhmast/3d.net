@@ -2,6 +2,6 @@
 {
     public interface IModelFactory
     {
-        IModel CreateCube(float width, float height, float depth);
+        IModel CreateCube(string name, float width, float height, float depth);
     }
 }

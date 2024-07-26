@@ -1,6 +1,5 @@
 ﻿using _3DNet.Engine.Rendering;
-using _3DNet.Math;
-using System;
+using System.Numerics;
 
 namespace _3DNet.Engine.Scene
 {
@@ -22,10 +21,10 @@ namespace _3DNet.Engine.Scene
             // This is transposed which is equivalent to performing an inverse 
             // if the matrix is orthonormalized (in this case, it is).
             var orientation = new Matrix4x4(
-               (Right.X, Up.X, Forward.X, 0),
-               (Right.Y, Up.Y, Forward.Y, 0),
-               (Right.Z, Up.Z, Forward.Z, 0),
-               (0, 0, 0, 1));
+               Right.X, Up.X, Forward.X, 0,
+               Right.Y, Up.Y, Forward.Y, 0,
+               Right.Z, Up.Z, Forward.Z, 0,
+               0, 0, 0, 1);
 
             // Create a 4x4 translation matrix.
             // The eye position is negated which is equivalent
@@ -34,10 +33,10 @@ namespace _3DNet.Engine.Scene
 
 
             var translation = new Matrix4x4(
-                (1, 0, 0, 0),
-                (0, 1, 0, 0),
-                (0, 0, 1, 0),
-                -Position.ToVerctor4F());
+                1, 0, 0, 0,
+                0, 1, 0, 0,
+                0, 0, 1, 0,
+                -Position.X,-Position.Y,-Position.Z,0);
             // Combine the orientation and translation to compute 
             // the final view matrix. Note that the order of 
             // multiplication is reversed because the matrices
@@ -49,7 +48,7 @@ namespace _3DNet.Engine.Scene
 
         public override void Render(IRenderWindowContext context)
         {
-            context.SetView(_view);
+           // context.SetView(_view);
         }
 
     }
