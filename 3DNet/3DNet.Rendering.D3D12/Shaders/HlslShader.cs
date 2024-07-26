@@ -1,5 +1,6 @@
 ﻿using _3DNet.Engine.Rendering;
 using _3DNet.Engine.Rendering.Shader;
+using _3DNet.Rendering.Buffer;
 using _3DNet.Rendering.D3D12.Buffer;
 using SharpDX.D3DCompiler;
 using SharpDX.Direct3D;
@@ -14,10 +15,10 @@ namespace _3DNet.Rendering.D3D12.Shaders
         private readonly D3DRenderEngine _d3DRenderEngine;
         private readonly DescriptorHeap _shaderHeap;
         private readonly Engine.Rendering.Shader.ShaderDescription _shaderDescription;
+        private readonly IList<IBuffer> _buffers = new List<IBuffer>();
         private PipelineState _graphicsPipelineState;
         private D3DRenderWindowContext _context;
         private RootSignature _rootSignature;
-        private readonly List<ShaderBuffer> _buffers = new();
 
         public HlslShader(string name, D3DRenderEngine d3DRenderEngine, Engine.Rendering.Shader.ShaderDescription shaderDescription)
         {
@@ -33,11 +34,6 @@ namespace _3DNet.Rendering.D3D12.Shaders
                 Type = DescriptorHeapType.ConstantBufferViewShaderResourceViewUnorderedAccessView
             });
 
-            for (var i = 0; i < _shaderDescription.Buffers.Count; i++)
-            {
-                ShaderBufferDescription bufferDesc = _shaderDescription.Buffers[i];
-                _buffers.Add(new ShaderBuffer($"{name}_shdrbffr_{i}", _d3DRenderEngine, _shaderHeap, bufferDesc));
-            }
         }
 
         private void RecreateShader()
@@ -104,9 +100,10 @@ namespace _3DNet.Rendering.D3D12.Shaders
         {
             return new SharpDX.Direct3D12.ShaderBytecode(SharpDX.D3DCompiler.ShaderBytecode.CompileFromFile(shaderFile, method, profile
 #if DEBUG
-                , ShaderFlags.WarningsAreErrors | ShaderFlags.Debug | ShaderFlags.PackMatrixRowMajor
+                , ShaderFlags.WarningsAreErrors | ShaderFlags.Debug | ShaderFlags.SkipOptimization
 
 #endif
+                | ShaderFlags.PackMatrixRowMajor
                           ));
 
         }
@@ -132,7 +129,7 @@ namespace _3DNet.Rendering.D3D12.Shaders
             _d3DRenderEngine.UnregisterD3DObject(this);
         }
 
-        public void Load(IRenderWindowContext context)
+        public void Load(IRenderContextInternal context)
         {
             _context.SetPrimitiveTopology(PrimitiveTopology.TriangleList);
             _context.SetPipelineState(_graphicsPipelineState);
@@ -142,5 +139,10 @@ namespace _3DNet.Rendering.D3D12.Shaders
                 buffer.Load(context);
             }
         }
+
+        public IBuffer<T> CreateBuffer<T>(ShaderBufferDescription shaderBufferDescription, int length) where T : struct
+        => new D3D12ShaderBuffer<T>(_d3DRenderEngine,_shaderHeap, shaderBufferDescription,length);
+        public IBuffer<T> CreateBuffer<T>(ShaderBufferDescription shaderBufferDescription, T[] data) where T : struct
+        => new D3D12ShaderBuffer<T>(_d3DRenderEngine,_shaderHeap, shaderBufferDescription,data);
     }
 }

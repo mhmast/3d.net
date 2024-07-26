@@ -12,7 +12,7 @@ using System.Windows.Forms;
 
 namespace _3DNet.Rendering.D3D12
 {
-    internal class D3DRenderWindowContext : IRenderWindowContext
+    internal class D3DRenderWindowContext : IRenderContextInternal
     {
         private readonly Queue<Action<GraphicsCommandList>> _commandQueue = new();
         private readonly EventWaitHandle _renderHandle = new(false, EventResetMode.AutoReset);
@@ -21,16 +21,18 @@ namespace _3DNet.Rendering.D3D12
         private readonly CommandQueue _d3DCommandQueue;
         private readonly IEnumerable<ID3DObject> _d3DObjects;
         private readonly D3DRenderForm _d3DRenderForm;
+        private readonly Action<IRenderContextInternal> _setActive;
         private bool _disposing;
-        private Fence _fence;
+        private readonly Fence _fence;
 
-        public D3DRenderWindowContext(Device device, CommandAllocator commandAllocator, CommandQueue commandQueue, IEnumerable<ID3DObject> d3DObjects, D3DRenderForm d3DRenderForm)
+        public D3DRenderWindowContext(Device device, CommandAllocator commandAllocator, CommandQueue commandQueue, IEnumerable<ID3DObject> d3DObjects, D3DRenderForm d3DRenderForm, Action<IRenderContextInternal> setActive)
         {
             _d3DDevice = device;
             _d3DCommandAllocator = commandAllocator;
             _d3DCommandQueue = commandQueue;
             _d3DObjects = d3DObjects;
             _d3DRenderForm = d3DRenderForm;
+            _setActive = setActive;
             _d3DRenderForm.Disposed += (_, __) => Dispose();
             _d3DRenderForm.FormClosed += (_, __) => _d3DRenderForm.Dispose();
             _fence = _d3DDevice.CreateFence(0, FenceFlags.None);
@@ -144,10 +146,11 @@ namespace _3DNet.Rendering.D3D12
         {
             vertexBuffer.Load(this);
             indexBuffer.Load(this);
-            _commandQueue.Enqueue(c => c.DrawIndexedInstanced(indexBuffer.Count, 1, 0, 0, 0));
+            _commandQueue.Enqueue(c => c.DrawIndexedInstanced(indexBuffer.Length, 1, 0, 0, 0));
         }
 
         internal void SetScissorRect(RawRectangle scissorRect) => _commandQueue.Enqueue(c => c.SetScissorRectangles(scissorRect));
         internal void SetViewport(RawViewportF viewport) => _commandQueue.Enqueue(c => c.SetViewport(viewport));
+        public void SetActiveContext() => _setActive(this);
     }
 }

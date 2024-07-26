@@ -12,15 +12,23 @@ using System.Linq;
 using _3DNet.Rendering.D3D12.Shaders;
 using _3DNet.Engine.Rendering.Shader;
 using System.IO;
+using SharpDX;
+using System.Numerics;
+using _3DNet.Rendering.Buffer;
 
 namespace _3DNet.Rendering.D3D12
 {
     internal class D3DRenderEngine : IRenderEngine, IShaderFactory
     {
+#if DEBUG
         private readonly DriverType _driverType = DriverType.Warp;
+#else
+        private readonly DriverType _driverType = DriverType.Hardware;
+#endif
         private Device _device;
         private CommandQueue _commandQueue;
         private CommandAllocator _commandAllocator;
+        private IBuffer<Matrix4x4> _wvpBuffer;
         private readonly IDictionary<string, ID3DRenderTarget> _activeTargets = new Dictionary<string, ID3DRenderTarget>();
         private readonly string _basePath = new FileInfo(typeof(D3DRenderEngine).Assembly.Location).DirectoryName;
         private readonly IDictionary<string, HlslShader> _shaders = new Dictionary<string, HlslShader>();
@@ -99,17 +107,13 @@ namespace _3DNet.Rendering.D3D12
             _commandQueue = _device.CreateCommandQueue(new CommandQueueDescription(CommandListType.Direct));
             _commandAllocator = _device.CreateCommandAllocator(CommandListType.Direct);
             var defaultShaderDescription = new ShaderDescription(Path.Combine(_basePath, "Shaders", "default.hlsl"), "vs_5_0", "VSMain", "ps_5_0", "PSMain");
-            defaultShaderDescription.Buffers.Add(new ShaderBufferDescription(0, BufferType.GPUInput, sizeof(float) * 16, BufferUsage.VertexShader, GetWVPData));
             DefaultShader = LoadShader("Default", defaultShaderDescription);
-
+            _wvpBuffer = DefaultShader.CreateBuffer<Matrix4x4>(new ShaderBufferDescription("Default_wvp_buffer", 0, BufferType.GPUInput, BufferUsage.VertexShader), 1);
         }
-
-        private object GetWVPData(IRenderWindowContext context)
-        => context.World * context.View * context.Projection;
 
         internal RootSignature CreateRootSignature(Blob byteCode) => _device.CreateRootSignature(byteCode);
 
-        public IndexBuffer CreateIndexBuffer(string name, IEnumerable<int> data) => new(_device, name, data);
+        public IndexBuffer CreateIndexBuffer(string name, uint[] data) => new(_device, name, data);
 
         public VertexBuffer<T> CreateVertexBuffer<T>(string name, IEnumerable<T> data) where T : struct => new(_device, name, data.ToArray());
 
@@ -124,9 +128,7 @@ namespace _3DNet.Rendering.D3D12
 
         internal void CreateDepthStencilView(SharpDX.Direct3D12.Resource depthStencilBuffer, DepthStencilViewDescription? descRef, CpuDescriptorHandle depthStencilView) => _device.CreateDepthStencilView(depthStencilBuffer, descRef, depthStencilView);
 
-        public IRenderWindowContext CreateRenderWindowContext(string name, Size size, bool fullScreen)
-        => new D3DRenderWindowContext(_device, _commandAllocator, _commandQueue, _d3DObjects, CreateWindow(size, name, fullScreen));
-
-
+        public IRenderContext CreateRenderContext(string name, Size size, bool fullScreen, Action<IRenderContextInternal> setActive)
+        => new D3DRenderWindowContext(_device, _commandAllocator, _commandQueue, _d3DObjects, CreateWindow(size, name, fullScreen), setActive);
     }
 }

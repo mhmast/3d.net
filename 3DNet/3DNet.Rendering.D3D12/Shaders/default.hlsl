@@ -26,9 +26,18 @@ float4 VSMain(VSInput input) : SV_POSITION
 
 }
 
-float4 PSMain(float4 input : SV_POSITION) : SV_TARGET
+// Pixel Shader
+float4 PSMain(PSInput input) : SV_TARGET
 {
-	//PSOutput output;
-	return float4(125,125,125,125);
-	//return output;
+    return float4(1.0, 1.0, 1.0, 1.0); // White color
+}
+
+// Technique
+technique10 Render
+{
+    pass P0
+    {
+        SetVertexShader(CompileShader(vs_4_0, VSMain()));
+        SetPixelShader(CompileShader(ps_4_0, PSMain()));
+    }
 }

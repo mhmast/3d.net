@@ -17,7 +17,7 @@ namespace _3DNet.Engine.Rendering.Model
 
         public IShader Shader { get ; }
         
-        public void Render(IRenderWindowContext context)
+        public void Render(IRenderContextInternal context)
         {
             Shader.Load(context);
             context.Draw(_vertexBuffer,_indexBuffer);

@@ -5,6 +5,6 @@ namespace _3DNet.Engine.Rendering.Model
     public interface IModel
     {
         IShader Shader { get;  }
-        void Render(IRenderWindowContext context);
+        void Render(IRenderContextInternal renderContext);
     }
 }

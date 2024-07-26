@@ -3,32 +3,40 @@ using _3DNet.Rendering.Buffer;
 using SharpDX;
 using SharpDX.Direct3D12;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using Device = SharpDX.Direct3D12.Device;
 
 namespace _3DNet.Rendering.D3D12.Buffer
 {
-    internal class IndexBuffer : IBuffer
+    internal class IndexBuffer : IBuffer<uint>
     {
-        private readonly int _bufferSize;
+        private int _bufferLength;
         private Resource _indexBuffer;
+        private readonly string _name;
+        private readonly Device _device;
 
-        public int Count { get; }
+        public int Length { get; private set; }
 
-        public IndexBuffer(Device device,string name, IEnumerable<int> data)
+        public IndexBuffer(Device device,string name, uint[] data)
         {
-            var arr = data.ToArray();
-            Count = arr.Length;
-            _bufferSize = sizeof(int) * arr.Length;
-            _indexBuffer = device.CreateCommittedResource(new HeapProperties(HeapType.Upload), HeapFlags.None, ResourceDescription.Buffer(_bufferSize), ResourceStates.GenericRead);
-            _indexBuffer.Name = $"indxbffer_{name}";
+            _name = name;
+            _device = device;
+            InitializeBuffer(data);
+        }
+
+        private void InitializeBuffer(uint[] data)
+        {
+            Length = data.Length;
+
+            _bufferLength = Utilities.SizeOf(data);
+            _indexBuffer = _device.CreateCommittedResource(new HeapProperties(HeapType.Upload), HeapFlags.None, ResourceDescription.Buffer(_bufferLength), ResourceStates.GenericRead);
+            _indexBuffer.Name = $"indxbffer_{_name}";
+
             var pIndexDataBegin = _indexBuffer.Map(0);
-            Utilities.Write(pIndexDataBegin, arr, 0, arr.Length);
+            Utilities.Write(pIndexDataBegin, data, 0, data.Length);
             _indexBuffer.Unmap(0);
         }
 
-        public void Load(IRenderWindowContext context) => context.SetIndexBuffer(new IntPtr(_indexBuffer.GPUVirtualAddress), _bufferSize, sizeof(uint));
+        public void Load(IRenderContextInternal context) => context.SetIndexBuffer(new IntPtr(_indexBuffer.GPUVirtualAddress), _bufferLength, Utilities.SizeOf<uint>());
 
         protected virtual void Dispose(bool disposing)
         {
@@ -47,6 +55,11 @@ namespace _3DNet.Rendering.D3D12.Buffer
             // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
             Dispose(disposing: true);
             GC.SuppressFinalize(this);
+        }
+
+        public void Write(uint[] values)
+        {
+            InitializeBuffer(values);
         }
     }
 }

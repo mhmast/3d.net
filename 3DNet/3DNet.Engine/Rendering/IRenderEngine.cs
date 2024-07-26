@@ -1,4 +1,4 @@
-﻿using _3DNet.Engine.Rendering.Shader;
+﻿using System;
 using System.Drawing;
 
 namespace _3DNet.Engine.Rendering
@@ -6,6 +6,6 @@ namespace _3DNet.Engine.Rendering
     public interface IRenderEngine
     {
         void Initialize();
-        IRenderWindowContext CreateRenderWindowContext(string name, Size size, bool fullScreen);
+        IRenderContext CreateRenderContext(string name, Size size, bool fullScreen, Action<IRenderContextInternal> setActive);
     }
 }

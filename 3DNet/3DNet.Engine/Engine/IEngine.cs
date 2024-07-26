@@ -7,8 +7,6 @@ namespace _3DNet.Engine.Engine
     {
         void Start();
         void Stop();
-        void SetActiveContext(IRenderWindowContext context) ;
         IScene GetOrCreateScene(string name);
-        void SetActiveScene(IScene scene);
     }
 }

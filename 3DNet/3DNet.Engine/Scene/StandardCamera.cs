@@ -36,7 +36,7 @@ namespace _3DNet.Engine.Scene
                 1, 0, 0, 0,
                 0, 1, 0, 0,
                 0, 0, 1, 0,
-                -Position.X,-Position.Y,-Position.Z,0);
+                -Position.X, -Position.Y, -Position.Z, 0);
             // Combine the orientation and translation to compute 
             // the final view matrix. Note that the order of 
             // multiplication is reversed because the matrices
@@ -46,10 +46,11 @@ namespace _3DNet.Engine.Scene
             _view = orientation * translation;
         }
 
-        public override void Render(IRenderWindowContext context)
+        public override void Render(IRenderContextInternal context)
         {
-           // context.SetView(_view);
+            context.SetView(_view);
         }
 
+        public void SetActiveCamera() => SceneInternal.SetActiveCamera(this);
     }
 }

@@ -151,7 +151,7 @@ namespace _3DNet.Rendering.D3D12
         }
 
 
-        public void Clear(IRenderWindowContext context, Color clearColor)
+        public void Clear(IRenderContextInternal context, Color clearColor)
         {
             context.ClearDepthStencilView(_depthStencilView.Ptr, 1, 5);
             context.ClearRenderTargetView(_renderView.Ptr, clearColor);

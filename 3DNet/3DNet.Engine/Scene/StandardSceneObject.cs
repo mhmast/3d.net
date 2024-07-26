@@ -7,13 +7,12 @@ namespace _3DNet.Engine.Scene
     {
 
         private readonly IModel _model;
-        public StandardSceneObject(IScene scene,string name, IModel model) : base(scene,name)
+        public StandardSceneObject(Scene scene,string name, IModel model) : base(scene,name)
         {
-            
             _model = model;
         }
 
-        public override void Render(IRenderWindowContext context)
+        public override void Render(IRenderContextInternal context)
         {
             context.SetWorld(World);
             _model.Render(context);

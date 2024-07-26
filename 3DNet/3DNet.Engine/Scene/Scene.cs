@@ -6,16 +6,18 @@ using System.Drawing;
 
 namespace _3DNet.Engine.Scene
 {
-    internal class Scene : IScene
+    internal class Scene : ISceneInternal
     {
-        private readonly Dictionary<string, ISceneObject> _createdObjects = new();
-        private StandardCamera _activeCamera;
+        private readonly Dictionary<string, BaseSceneObject> _createdObjects = new();
+        private readonly Engine.Engine _engine;
+        private IRenderable _activeCamera;
 
         private string Name { get; }
 
-        public Scene(string name)
+        public Scene(string name,Engine.Engine engine)
         {
             Name = name;
+            _engine = engine;
         }
 
 
@@ -37,13 +39,14 @@ namespace _3DNet.Engine.Scene
             return obj;
         }
 
-        public void Render(IRenderWindowContext context, long ms)
+        public void Render(IRenderContextInternal context, long ms)
         {
             bool success = context.BeginScene(BackgroundColor, ms);
             if (!success)
             {
                 return;
             }
+            _activeCamera?.Render(context);
             foreach (var obj in _createdObjects.Values)
             {
                 obj.Render(context);
@@ -59,14 +62,12 @@ namespace _3DNet.Engine.Scene
         public ICamera CreateStandardCamera(string name)
         {
             var obj = new StandardCamera(this, name);
-            _createdObjects.Add(name, obj);
-            _activeCamera = _activeCamera ?? obj;
+            //_createdObjects.Add(name, obj);
+            _activeCamera ??= obj;
             return obj;
         }
 
-        public void SetActiveCamera(ICamera cam)
-        {
-            _activeCamera = _createdObjects[cam.Name] as StandardCamera;
-        }
+        public void SetActiveScene() => _engine.SetActiveScene(this);
+        internal void SetActiveCamera(IRenderable activeCamera) => _activeCamera = activeCamera;
     }
 }

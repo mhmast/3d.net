@@ -9,21 +9,21 @@ namespace _3DNet.Engine.Engine
     {
         readonly IRenderEngine _renderEngine;
         private bool _running = false;
-        private IRenderWindowContext _context;
-        private IScene _activeScene;
+        private IRenderContextInternal _context;
+        private ISceneInternal _activeScene;
         private Dictionary<string, Scene.Scene> _scenes = new();
         public Engine(IRenderEngine renderEngine)
         {
             _renderEngine = renderEngine;
         }
 
-        public void SetActiveContext(IRenderWindowContext context) => _context = context;
+        public void SetActiveContext(IRenderContextInternal context) => _context = context;
 
         public IScene GetOrCreateScene(string name)
         {
             if (!_scenes.ContainsKey(name))
             {
-                _scenes.Add(name, new Scene.Scene(name));
+                _scenes.Add(name, new Scene.Scene(name,this));
             }
             return _scenes[name];
         }
@@ -54,7 +54,7 @@ namespace _3DNet.Engine.Engine
 
         public void Stop() => _running = false;
 
-        public void SetActiveScene(IScene scene)
+        public void SetActiveScene(ISceneInternal scene)
         {
             _activeScene = scene;
         }

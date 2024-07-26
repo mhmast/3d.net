@@ -50,8 +50,8 @@ namespace _3DNet.Engine.Rendering.Model
                 (-width/2,height/2,depth/2) , (width/2,height/2,depth/2),(-width/2,-height/2,depth/2) , (width/2,-height/2,depth/2)
             };
 
-        protected int[] CreateCubeIndices()
-        => new[]
+        protected uint[] CreateCubeIndices()
+        => new uint[]
             {
                 //front
                 0,1,3,0,3,2,
@@ -68,7 +68,7 @@ namespace _3DNet.Engine.Rendering.Model
             };
         public IModel CreateCube(string name, float width, float height, float depth)
           => new SimpleModel(CreateVertexBuffer(name, CreateCubeVertices(width, height, depth).ToArray()), CreateIndexBuffer(name, CreateCubeIndices()), _shaderFactory.DefaultShader);
-        protected abstract IBuffer CreateIndexBuffer(string name, int[] indices);
+        protected abstract IBuffer CreateIndexBuffer(string name, uint[] indices);
         protected abstract IBuffer CreateVertexBuffer<T>(string name, IEnumerable<T> vertices) where T : struct;
     }
 }

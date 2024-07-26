@@ -5,7 +5,7 @@ using System.Numerics;
 
 namespace _3DNet.Engine.Scene
 {
-    internal abstract class BaseSceneObject : ISceneObject
+    internal abstract class BaseSceneObject : ISceneObject, IRenderable
     {
         private Vector3 _position = new Vector3(0, 0, 0);
         private Vector3 _forward = new Vector3(0, 0, -1);
@@ -15,18 +15,20 @@ namespace _3DNet.Engine.Scene
         private Matrix4x4 _rotation = Matrix4x4.Identity;
         private Matrix4x4 _scale = Matrix4x4.Identity;
 
-        protected BaseSceneObject(IScene scene, string name)
+        protected BaseSceneObject(Scene scene, string name)
         {
-            Scene = scene;
+            SceneInternal = scene;
             Name = name;
             ReCalculateWorld();
         }
 
+        protected virtual void OnTranslationChanged() { }
         protected virtual void OnRotationChanged() { }
 
         protected virtual void OnScaleChanged() { }
 
-        public IScene Scene { get; }
+        public IScene Scene => SceneInternal;
+        internal protected Scene SceneInternal { get; }
         public Matrix4x4 World { get; private set; }
         public string Name { get; }
 
@@ -38,25 +40,26 @@ namespace _3DNet.Engine.Scene
 
         public Vector3 Right => _right;
 
-        protected virtual void OnTranslationChanged() { }
 
         private void ReCalculateWorld()
         {
-            World = Matrix4x4.CreateWorld(_position,_forward,_up);
+            World = Matrix4x4.CreateWorld(_position, _forward, _up);
         }
 
-        public abstract void Render(IRenderWindowContext context);
+        public abstract void Render(IRenderContextInternal context);
 
         public void MoveForward(Vector3 relativeAmount)
         {
             _position += relativeAmount;
             ReCalculateWorld();
+            OnTranslationChanged();
         }
 
         public void MoveTo(Vector3 position)
         {
             _position = position;
             ReCalculateWorld();
+            OnTranslationChanged();
         }
 
         public void LookAt(ISceneObject obj)
@@ -65,6 +68,7 @@ namespace _3DNet.Engine.Scene
             _right = _up.Cross(_forward).Normalize();
             _up = _forward.Cross(_right);
             ReCalculateWorld();
+            OnRotationChanged();
         }
 
 
@@ -75,6 +79,7 @@ namespace _3DNet.Engine.Scene
             _forward = (new Quaternion(0, 0, 1, 0) * _rotationQuat).ToVector3().Normalize();
             _right = (new Quaternion(1, 0, 0, 0) * _rotationQuat).ToVector3().Normalize();
             ReCalculateWorld();
+            OnRotationChanged();
         }
     }
 }

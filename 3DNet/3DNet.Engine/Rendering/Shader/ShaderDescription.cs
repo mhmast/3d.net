@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using _3DNet.Rendering.Buffer;
+using System.Collections.Generic;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -24,6 +25,5 @@ namespace _3DNet.Engine.Rendering.Shader
 
         public string Signature => Encoding.UTF8.GetString(SHA256.Create().ComputeHash(Encoding.UTF8.GetBytes($"{ShaderFile}|{VertexShaderMethod}|{VertexShaderProfile}|{PixelShaderMethod}|{PixelShaderProfile}")));
 
-        public IList<ShaderBufferDescription> Buffers { get; set; } = new List<ShaderBufferDescription>();
     }
 }

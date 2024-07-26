@@ -5,8 +5,15 @@ namespace _3DNet.Rendering.Buffer
 {
     public interface IBuffer : IDisposable
     {
-        int Count { get; }
+        int Length { get; }
 
-        void Load(IRenderWindowContext context);
+        void Load(IRenderContextInternal context);
+
+
+    }
+
+    public interface IBuffer<T> : IBuffer where T : struct
+    {
+        void Write(T[] values);
     }
 }

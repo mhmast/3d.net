@@ -14,7 +14,7 @@ namespace _3DNet.Rendering.D3D12.Model
             _renderEngine = renderEngine;
         }
 
-        protected override IBuffer CreateIndexBuffer(string name,int[] indices)
+        protected override IBuffer CreateIndexBuffer(string name,uint[] indices)
         => _renderEngine.CreateIndexBuffer(name,indices);
 
         protected override IBuffer CreateVertexBuffer<T>(string name, IEnumerable<T> vertices) where T : struct

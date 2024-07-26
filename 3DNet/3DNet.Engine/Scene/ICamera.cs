@@ -2,6 +2,7 @@
 {
     public interface ICamera : ISceneObject
     {
+        void SetActiveCamera();
         void LookAt(ISceneObject obj);
     }
 }
