@@ -26,6 +26,10 @@ namespace _3DNet.Rendering.D3D12.Buffer
         {
             _bufferDesc = bufferDesc;
             var size = Utilities.SizeOf<T>() * length;
+            var amountof256 = size / 256;
+            amountof256 += size % 256 > 0 ? 1 : 0;
+            size = amountof256 * 256;
+
             _d3DRenderEngine = d3DRenderEngine;
             _shaderHeap = shaderHeap;
             

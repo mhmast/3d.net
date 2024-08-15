@@ -15,6 +15,7 @@ using System.IO;
 using SharpDX;
 using System.Numerics;
 using _3DNet.Rendering.Buffer;
+using System.Diagnostics;
 
 namespace _3DNet.Rendering.D3D12
 {
@@ -22,6 +23,7 @@ namespace _3DNet.Rendering.D3D12
     {
 #if DEBUG
         private readonly DriverType _driverType = DriverType.Warp;
+        private SharpDX.Direct3D12.InfoQueue _infoQueue;
 #else
         private readonly DriverType _driverType = DriverType.Hardware;
 #endif
@@ -104,12 +106,39 @@ namespace _3DNet.Rendering.D3D12
             using var factory = new Factory4();
             var adapter = _driverType == DriverType.Hardware ? null : factory.GetWarpAdapter();
             _device = new Device(adapter, FeatureLevel.Level_12_1);
+
+#if DEBUG
+            // Get the InfoQueue from the device's debug interface
+            _infoQueue = _device.QueryInterface<SharpDX.Direct3D12.InfoQueue>();
+
+            // Optionally filter messages to focus on certain types of issues
+            _infoQueue.SetBreakOnSeverity(MessageSeverity.Corruption, true);
+            _infoQueue.SetBreakOnSeverity(MessageSeverity.Error, true);
+
+            // Set the maximum number of messages to be stored in the queue
+            _infoQueue.MessageCountLimit = 1024;
+            AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
+#endif
+
             _commandQueue = _device.CreateCommandQueue(new CommandQueueDescription(CommandListType.Direct));
             _commandAllocator = _device.CreateCommandAllocator(CommandListType.Direct);
             var defaultShaderDescription = new ShaderDescription(Path.Combine(_basePath, "Shaders", "default.hlsl"), "vs_5_0", "VSMain", "ps_5_0", "PSMain");
             DefaultShader = LoadShader("Default", defaultShaderDescription);
             _wvpBuffer = DefaultShader.CreateBuffer<Matrix4x4>(new ShaderBufferDescription("Default_wvp_buffer", 0, BufferType.GPUInput, BufferUsage.VertexShader), 1);
         }
+
+#if DEBUG
+        private void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
+        {
+            Console.WriteLine(((Exception)e.ExceptionObject).Message);
+            for (int i = 0; i < _infoQueue.NumStoredMessagesAllowedByRetrievalFilter; i++)
+            {
+                var message = _infoQueue.GetMessage(i);
+                Debug.WriteLine($"DXERROR: {message.Description}");
+            }
+        }
+
+#endif
 
         internal RootSignature CreateRootSignature(Blob byteCode) => _device.CreateRootSignature(byteCode);
 
