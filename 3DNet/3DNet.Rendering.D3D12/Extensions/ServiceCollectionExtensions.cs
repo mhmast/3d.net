@@ -18,6 +18,6 @@ namespace _3DNet.Rendering.D3D12.Extensions
                 return engine;
             })
             .AddTransient<IModelFactory, D3DModelFactory>()
-            .AddTransient<IShaderFactory>(s=>s.GetRequiredService<D3DRenderEngine>());
+            .AddTransient<IShaderFactory>(s => s.GetRequiredService<D3DRenderEngine>());
     }
 }
