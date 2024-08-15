@@ -124,7 +124,6 @@ namespace _3DNet.Rendering.D3D12
             _commandAllocator = _device.CreateCommandAllocator(CommandListType.Direct);
             var defaultShaderDescription = new ShaderDescription(Path.Combine(_basePath, "Shaders", "default.hlsl"), "vs_5_0", "VSMain", "ps_5_0", "PSMain");
             DefaultShader = LoadShader("Default", defaultShaderDescription);
-            _wvpBuffer = DefaultShader.CreateBuffer<Matrix4x4>(new ShaderBufferDescription("Default_wvp_buffer", 0, BufferType.GPUInput, BufferUsage.VertexShader), 1);
         }
 
 #if DEBUG

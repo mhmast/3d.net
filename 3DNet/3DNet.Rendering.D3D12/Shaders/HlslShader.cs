@@ -7,6 +7,7 @@ using SharpDX.Direct3D;
 using SharpDX.Direct3D12;
 using SharpDX.DXGI;
 using System.Collections.Generic;
+using System.Numerics;
 
 namespace _3DNet.Rendering.D3D12.Shaders
 {
@@ -14,6 +15,7 @@ namespace _3DNet.Rendering.D3D12.Shaders
     {
         private readonly D3DRenderEngine _d3DRenderEngine;
         private readonly DescriptorHeap _shaderHeap;
+        private readonly IBuffer<Matrix4x4> _wvpBuffer;
         private readonly Engine.Rendering.Shader.ShaderDescription _shaderDescription;
         private readonly IList<IBuffer> _buffers = new List<IBuffer>();
         private PipelineState _graphicsPipelineState;
@@ -33,7 +35,7 @@ namespace _3DNet.Rendering.D3D12.Shaders
                 Flags = DescriptorHeapFlags.ShaderVisible,
                 Type = DescriptorHeapType.ConstantBufferViewShaderResourceViewUnorderedAccessView
             });
-
+            _wvpBuffer = CreateBuffer<Matrix4x4>(new ShaderBufferDescription("wvpBuffer", 0, BufferType.GPUInput, BufferUsage.VertexShader),1);
         }
 
         private void RecreateShader()
@@ -112,6 +114,7 @@ namespace _3DNet.Rendering.D3D12.Shaders
 
         public string Name { get; }
 
+        public IBuffer<Matrix4x4> WvpBuffer => _wvpBuffer;
 
         public void Begin(D3DRenderWindowContext context)
         {

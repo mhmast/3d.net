@@ -17,7 +17,7 @@ namespace _3DNet.Engine.Engine
             _renderEngine = renderEngine;
         }
 
-        public void SetActiveContext(IRenderContextInternal context) => _context = context;
+        internal void SetActiveContext(IRenderContextInternal context) => _context = context;
 
         public IScene GetOrCreateScene(string name)
         {

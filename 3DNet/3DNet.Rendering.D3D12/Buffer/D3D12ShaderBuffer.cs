@@ -42,6 +42,7 @@ namespace _3DNet.Rendering.D3D12.Buffer
                 SizeInBytes = size
             };
             _d3DRenderEngine.CreateConstantBufferView(cbvDesc, _shaderHeap.CPUDescriptorHandleForHeapStart);
+            _data = new T[length];
         }
 
         private static ResourceStates GetResourceState(BufferUsage bufferUsage)

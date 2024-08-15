@@ -1,5 +1,6 @@
 ﻿using _3DNet.Engine.Rendering.Shader;
 using _3DNet.Rendering.Buffer;
+using System.Numerics;
 
 namespace _3DNet.Engine.Rendering.Model
 {
@@ -7,7 +8,7 @@ namespace _3DNet.Engine.Rendering.Model
     {
         private readonly IBuffer _vertexBuffer;
         private readonly IBuffer _indexBuffer;
-
+        
         public SimpleModel(IBuffer buffer, IBuffer indexBuffer, IShader shader)
         {
             _vertexBuffer = buffer;
@@ -19,6 +20,7 @@ namespace _3DNet.Engine.Rendering.Model
         
         public void Render(IRenderContextInternal context)
         {
+            Shader.WvpBuffer.Write(new[] { context.WorldViewProjection });
             Shader.Load(context);
             context.Draw(_vertexBuffer,_indexBuffer);
         }
