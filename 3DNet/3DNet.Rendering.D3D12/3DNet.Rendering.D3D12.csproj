@@ -21,6 +21,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\3DNet.Engine\3DNet.Engine.csproj" />
+    <ProjectReference Include="..\3DNet.Math\3DNet.Math.csproj" />
   </ItemGroup>
 
   <ItemGroup>

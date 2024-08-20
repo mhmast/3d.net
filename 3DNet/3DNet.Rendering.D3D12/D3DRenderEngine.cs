@@ -122,7 +122,8 @@ namespace _3DNet.Rendering.D3D12
 
             _commandQueue = _device.CreateCommandQueue(new CommandQueueDescription(CommandListType.Direct));
             _commandAllocator = _device.CreateCommandAllocator(CommandListType.Direct);
-            var defaultShaderDescription = new ShaderDescription(Path.Combine(_basePath, "Shaders", "default.hlsl"), "vs_5_0", "VSMain", "ps_5_0", "PSMain");
+            var buffers = new[] { new ShaderBufferDescription<WvpBuffer>("globals", 0, BufferType.GPUInput, BufferUsage.VertexShader) };
+            var defaultShaderDescription = new ShaderDescription(Path.Combine(_basePath, "Shaders", "default.hlsl"), "vs_5_0", "VSMain", "ps_5_0", "PSMain", buffers, "globals");
             DefaultShader = LoadShader("Default", defaultShaderDescription);
             RegisterD3DObject(this);
         }
@@ -172,12 +173,13 @@ namespace _3DNet.Rendering.D3D12
 
         public IRenderContext CreateRenderContext(string name, Size size, bool fullScreen, Action<IRenderContextInternal> setActive)
         => new D3DRenderWindowContext(_device, _commandAllocator, _commandQueue, _d3DObjects, CreateWindow(size, name, fullScreen), setActive);
-        public void Begin(D3DRenderWindowContext context) { 
+        public void Begin(D3DRenderWindowContext context)
+        {
         }
         public void End(D3DRenderWindowContext context)
         {
 #if DEBUG
-            FlushInfoBuffer();
+            //FlushInfoBuffer();
 #endif
         }
     }

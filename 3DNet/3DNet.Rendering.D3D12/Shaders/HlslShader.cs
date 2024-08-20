@@ -7,7 +7,6 @@ using SharpDX.Direct3D;
 using SharpDX.Direct3D12;
 using SharpDX.DXGI;
 using System.Collections.Generic;
-using System.Numerics;
 
 namespace _3DNet.Rendering.D3D12.Shaders
 {
@@ -15,12 +14,12 @@ namespace _3DNet.Rendering.D3D12.Shaders
     {
         private readonly D3DRenderEngine _d3DRenderEngine;
         private readonly DescriptorHeap _shaderHeap;
-        private readonly IBuffer<Matrix4x4> _wvpBuffer;
         private readonly Engine.Rendering.Shader.ShaderDescription _shaderDescription;
-        private readonly IList<IBuffer> _buffers = new List<IBuffer>();
+        private readonly IDictionary<string, IWritableBuffer> _buffers = new Dictionary<string, IWritableBuffer>();
         private PipelineState _graphicsPipelineState;
         private D3DRenderWindowContext _context;
         private RootSignature _rootSignature;
+        private string _wvpBufferName;
 
         public HlslShader(string name, D3DRenderEngine d3DRenderEngine, Engine.Rendering.Shader.ShaderDescription shaderDescription)
         {
@@ -29,13 +28,17 @@ namespace _3DNet.Rendering.D3D12.Shaders
             _shaderDescription = shaderDescription;
             _d3DRenderEngine.RenderTargetCreated += RecreateShader;
             _d3DRenderEngine.RegisterD3DObject(this);
+            _wvpBufferName = shaderDescription.WvpBufferName;
             _shaderHeap = _d3DRenderEngine.CreateDescriptorHeap(new DescriptorHeapDescription
             {
                 DescriptorCount = 1,
                 Flags = DescriptorHeapFlags.ShaderVisible,
                 Type = DescriptorHeapType.ConstantBufferViewShaderResourceViewUnorderedAccessView
             });
-            _wvpBuffer = CreateBuffer<Matrix4x4>(new ShaderBufferDescription("wvpBuffer", 0, BufferType.GPUInput, BufferUsage.VertexShader),1);
+            foreach (var description in shaderDescription.Buffers)
+            {
+                _buffers.Add(description.Name, new D3D12ShaderBuffer(_d3DRenderEngine, _shaderHeap, description));
+            }
         }
 
         private void RecreateShader()
@@ -94,15 +97,13 @@ namespace _3DNet.Rendering.D3D12.Shaders
             _graphicsPipelineState?.Dispose();
             _graphicsPipelineState = _d3DRenderEngine.CreateGraphicsPipelineState(gpsDesc);
             _graphicsPipelineState.Name = $"gps_{Name}";
-
-
         }
 
         private static SharpDX.Direct3D12.ShaderBytecode LoadShaderByteCode(string shaderFile, string method, string profile)
         {
             return new SharpDX.Direct3D12.ShaderBytecode(SharpDX.D3DCompiler.ShaderBytecode.CompileFromFile(shaderFile, method, profile
 #if DEBUG
-                , ShaderFlags.WarningsAreErrors | ShaderFlags.Debug | ShaderFlags.SkipOptimization | ShaderFlags.DebugNameForSource| ShaderFlags.DebugNameForBinary
+                , ShaderFlags.WarningsAreErrors | ShaderFlags.Debug | ShaderFlags.SkipOptimization | ShaderFlags.DebugNameForSource 
 
 #endif
                 | ShaderFlags.PackMatrixRowMajor
@@ -114,7 +115,9 @@ namespace _3DNet.Rendering.D3D12.Shaders
 
         public string Name { get; }
 
-        public IBuffer<Matrix4x4> WvpBuffer => _wvpBuffer;
+        public IWritableBuffer WvpBuffer => Buffers[_wvpBufferName];
+
+        public IDictionary<string, IWritableBuffer> Buffers => _buffers;
 
         public void Begin(D3DRenderWindowContext context)
         {
@@ -127,6 +130,10 @@ namespace _3DNet.Rendering.D3D12.Shaders
 
         public void Dispose()
         {
+            foreach (var buffer in Buffers)
+            {
+                buffer.Value.Dispose();
+            }
             _graphicsPipelineState?.Dispose();
             _shaderHeap?.Dispose();
             _d3DRenderEngine.UnregisterD3DObject(this);
@@ -137,15 +144,12 @@ namespace _3DNet.Rendering.D3D12.Shaders
             _context.SetPrimitiveTopology(PrimitiveTopology.TriangleList);
             _context.SetPipelineState(_graphicsPipelineState);
             _context.SetGraphicsRootSignature(_rootSignature);
-            foreach (var buffer in _buffers)
+            foreach (var buffer in _buffers.Values)
             {
                 buffer.Load(context);
             }
         }
 
-        public IBuffer<T> CreateBuffer<T>(ShaderBufferDescription shaderBufferDescription, int length) where T : struct
-        => new D3D12ShaderBuffer<T>(_d3DRenderEngine,_shaderHeap, shaderBufferDescription,length);
-        public IBuffer<T> CreateBuffer<T>(ShaderBufferDescription shaderBufferDescription, T[] data) where T : struct
-        => new D3D12ShaderBuffer<T>(_d3DRenderEngine,_shaderHeap, shaderBufferDescription,data);
+
     }
 }

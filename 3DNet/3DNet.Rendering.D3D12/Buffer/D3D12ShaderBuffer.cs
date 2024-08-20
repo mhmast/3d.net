@@ -4,35 +4,31 @@ using _3DNet.Rendering.Buffer;
 using SharpDX;
 using SharpDX.Direct3D12;
 using System;
+using System.Runtime.InteropServices;
 
 namespace _3DNet.Rendering.D3D12.Buffer
 {
-    internal class D3D12ShaderBuffer<T> : IBuffer<T>
-    where T : struct
+    internal class D3D12ShaderBuffer : IWritableBuffer
     {
         private readonly Resource _buffer;
         private readonly ShaderBufferDescription _bufferDesc;
         private readonly D3DRenderEngine _d3DRenderEngine;
         private readonly DescriptorHeap _shaderHeap;
-        private T[] _data = Array.Empty<T>();
-        public int Length => _data.Length;
+        public int Length { get; }
+        public long SizeInBytes { get; }
 
-        public D3D12ShaderBuffer(D3DRenderEngine d3DRenderEngine, DescriptorHeap shaderHeap, ShaderBufferDescription bufferDesc, T[] data) 
-            : this(d3DRenderEngine, shaderHeap, bufferDesc, Utilities.SizeOf(data))
-        {
-            _data = data;
-        }
-        public D3D12ShaderBuffer(D3DRenderEngine d3DRenderEngine, DescriptorHeap shaderHeap, ShaderBufferDescription bufferDesc, int length)
+
+        public D3D12ShaderBuffer(D3DRenderEngine d3DRenderEngine, DescriptorHeap shaderHeap, ShaderBufferDescription bufferDesc)
         {
             _bufferDesc = bufferDesc;
-            var size = Utilities.SizeOf<T>() * length;
+            var size = Marshal.SizeOf(bufferDesc.DataType);
             var amountof256 = size / 256;
             amountof256 += size % 256 > 0 ? 1 : 0;
             size = amountof256 * 256;
 
             _d3DRenderEngine = d3DRenderEngine;
             _shaderHeap = shaderHeap;
-            
+
             _buffer = _d3DRenderEngine.CreateCommittedResource(new HeapProperties { Type = GetHeapType(_bufferDesc.Type), CPUPageProperty = CpuPageProperty.Unknown }, HeapFlags.None,
                ResourceDescription.Buffer(size), GetResourceState(_bufferDesc.Type, GetResourceState(_bufferDesc.BufferUsage)));
             _buffer.Name = bufferDesc.Name;
@@ -42,7 +38,8 @@ namespace _3DNet.Rendering.D3D12.Buffer
                 SizeInBytes = size
             };
             _d3DRenderEngine.CreateConstantBufferView(cbvDesc, _shaderHeap.CPUDescriptorHandleForHeapStart);
-            _data = new T[length];
+            Length = 1;
+            SizeInBytes = size;
         }
 
         private static ResourceStates GetResourceState(BufferUsage bufferUsage)
@@ -96,15 +93,15 @@ namespace _3DNet.Rendering.D3D12.Buffer
 
         public void Load(IRenderContextInternal context) => context.LoadShaderBuffer(_bufferDesc.Slot, new IntPtr(_buffer.GPUVirtualAddress));
 
-        public void Write(T[] values)
+        public unsafe void Write<T>(T value)
+            where T : struct
         {
-            if (Length < values.Length)
+            if (SizeInBytes < Utilities.SizeOf<T>())
             {
                 throw new ArgumentException("The size of this buffer cannot be extended");
             }
-            _data = values;
             var addr = _buffer.Map(0);
-            Utilities.Write(addr, _data, 0, _data.Length);
+            Utilities.Write(addr, ref value);
             _buffer.Unmap(0);
 
         }

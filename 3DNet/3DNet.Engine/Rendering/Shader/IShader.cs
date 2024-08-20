@@ -1,6 +1,6 @@
 ﻿using _3DNet.Rendering.Buffer;
 using System;
-using System.Numerics;
+using System.Collections.Generic;
 
 namespace _3DNet.Engine.Rendering.Shader
 {
@@ -8,10 +8,8 @@ namespace _3DNet.Engine.Rendering.Shader
     {
         string Name { get; }
         string ShaderSignature { get; }
-        IBuffer<Matrix4x4> WvpBuffer { get; }
-
+        IWritableBuffer WvpBuffer { get; }
+        IDictionary<string, IWritableBuffer> Buffers { get; }
         void Load(IRenderContextInternal context);
-        IBuffer<T> CreateBuffer<T>(ShaderBufferDescription shaderBufferDescription, T[] data) where T : struct;
-        IBuffer<T> CreateBuffer<T>(ShaderBufferDescription shaderBufferDescription, int length) where T : struct;
     }
 }

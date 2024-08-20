@@ -1,6 +1,5 @@
 ﻿using _3DNet.Engine.Rendering.Shader;
 using _3DNet.Rendering.Buffer;
-using System.Numerics;
 
 namespace _3DNet.Engine.Rendering.Model
 {
@@ -20,7 +19,7 @@ namespace _3DNet.Engine.Rendering.Model
         
         public void Render(IRenderContextInternal context)
         {
-            Shader.WvpBuffer.Write(new[] { context.WorldViewProjection });
+            Shader.WvpBuffer.Write(context.WorldViewProjection);
             Shader.Load(context);
             context.Draw(_vertexBuffer,_indexBuffer);
         }

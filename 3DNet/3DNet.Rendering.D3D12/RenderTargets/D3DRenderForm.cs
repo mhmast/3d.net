@@ -137,14 +137,13 @@ namespace _3DNet.Rendering.D3D12
 
             if (disposing)
             {
-
+                _engine.UnregisterD3DObject(this);
                 components?.Dispose();
                 _depthStencilBuffer?.Dispose();
                 _depthStencilViewHeap?.Dispose();
                 _backBuffer1?.Dispose();
                 _swapChain?.Dispose();
                 _renderTargetViewHeap?.Dispose();
-                _engine.UnregisterD3DObject(this);
             }
             base.Dispose(disposing);
 
@@ -173,7 +172,7 @@ namespace _3DNet.Rendering.D3D12
             {
                 ResizeSwapchainResources();
             }
-            Projection = Matrix4x4.CreatePerspectiveFieldOfView((float)Math.PI / 4f, Width / Height, 1, 500); ;
+            Projection = Matrix4x4.CreatePerspectiveFieldOfView((float)System.Math.PI / 4f, Width / Height, 1, 500); ;
         }
 
         private void ResizeSwapchainResources()

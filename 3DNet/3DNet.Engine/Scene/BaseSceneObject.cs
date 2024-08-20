@@ -1,4 +1,4 @@
-﻿using _3DNet.Engine.Extensions;
+﻿using _3DNet.Math.Extensions;
 using _3DNet.Engine.Rendering;
 using System;
 using System.Numerics;

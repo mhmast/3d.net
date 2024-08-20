@@ -1,5 +1,5 @@
-﻿#define D3DCOMPILE_DEBUG 1
-cbuffer globals : register(b0)
+﻿
+cbuffer globals
 {
 	matrix wvp;
 };

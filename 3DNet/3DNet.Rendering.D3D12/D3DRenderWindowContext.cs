@@ -1,4 +1,5 @@
 ﻿using _3DNet.Engine.Rendering;
+using _3DNet.Math.Extensions;
 using _3DNet.Rendering.Buffer;
 using SharpDX.Direct3D;
 using SharpDX.Direct3D12;
@@ -27,6 +28,7 @@ namespace _3DNet.Rendering.D3D12
         private Matrix4x4 _worldViewProjection;
         private Matrix4x4 _projection = Matrix4x4.Identity;
         private Matrix4x4 _view = Matrix4x4.Identity;
+        private readonly byte[] _worldViewProjectionBytes = new byte[sizeof(float) * 16];
         private readonly Fence _fence;
 
         public D3DRenderWindowContext(Device device, CommandAllocator commandAllocator, CommandQueue commandQueue, IEnumerable<ID3DObject> d3DObjects, D3DRenderForm d3DRenderForm, Action<IRenderContextInternal> setActive)
@@ -80,7 +82,7 @@ namespace _3DNet.Rendering.D3D12
         }
         public Matrix4x4 WorldViewProjection => _worldViewProjection;
 
-        public bool BeginScene(Color backgroundColor,long ms)
+        public bool BeginScene(Color backgroundColor, long ms)
         {
             Application.DoEvents();
 
@@ -135,7 +137,7 @@ namespace _3DNet.Rendering.D3D12
                 _fence.SetEventOnCompletion(ms, _renderHandle.SafeWaitHandle.DangerousGetHandle());
                 _renderHandle.WaitOne();
             }
-            
+
         }
 
         public void SetIndexBuffer(IntPtr bufferLocation, int sizeInBytes, int strideInBytes)

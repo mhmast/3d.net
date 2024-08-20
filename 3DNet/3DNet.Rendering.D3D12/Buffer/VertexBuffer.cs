@@ -32,6 +32,7 @@ namespace _3DNet.Rendering.D3D12.Buffer
         private readonly int _bufferLength;
 
         public int Length => _bufferLength;
+        public long SizeInBytes => _bufferSize;
 
         public void Load(IRenderContextInternal context) => context.SetVertexBuffer(new IntPtr(_vertexBuffer.GPUVirtualAddress), _bufferSize, _structSize);
 
