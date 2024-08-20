@@ -19,7 +19,7 @@ using System.Diagnostics;
 
 namespace _3DNet.Rendering.D3D12
 {
-    internal class D3DRenderEngine : IRenderEngine, IShaderFactory
+    internal class D3DRenderEngine : IRenderEngine, IShaderFactory, ID3DObject
     {
 #if DEBUG
         private readonly DriverType _driverType = DriverType.Warp;
@@ -30,7 +30,6 @@ namespace _3DNet.Rendering.D3D12
         private Device _device;
         private CommandQueue _commandQueue;
         private CommandAllocator _commandAllocator;
-        private IBuffer<Matrix4x4> _wvpBuffer;
         private readonly IDictionary<string, ID3DRenderTarget> _activeTargets = new Dictionary<string, ID3DRenderTarget>();
         private readonly string _basePath = new FileInfo(typeof(D3DRenderEngine).Assembly.Location).DirectoryName;
         private readonly IDictionary<string, HlslShader> _shaders = new Dictionary<string, HlslShader>();
@@ -106,12 +105,13 @@ namespace _3DNet.Rendering.D3D12
             using var factory = new Factory4();
             var adapter = _driverType == DriverType.Hardware ? null : factory.GetWarpAdapter();
             _device = new Device(adapter, FeatureLevel.Level_12_1);
-
 #if DEBUG
             // Get the InfoQueue from the device's debug interface
             _infoQueue = _device.QueryInterface<SharpDX.Direct3D12.InfoQueue>();
 
             // Optionally filter messages to focus on certain types of issues
+            _infoQueue.SetBreakOnSeverity(MessageSeverity.Message, true);
+            _infoQueue.SetBreakOnSeverity(MessageSeverity.Information, true);
             _infoQueue.SetBreakOnSeverity(MessageSeverity.Corruption, true);
             _infoQueue.SetBreakOnSeverity(MessageSeverity.Error, true);
 
@@ -124,16 +124,30 @@ namespace _3DNet.Rendering.D3D12
             _commandAllocator = _device.CreateCommandAllocator(CommandListType.Direct);
             var defaultShaderDescription = new ShaderDescription(Path.Combine(_basePath, "Shaders", "default.hlsl"), "vs_5_0", "VSMain", "ps_5_0", "PSMain");
             DefaultShader = LoadShader("Default", defaultShaderDescription);
+            RegisterD3DObject(this);
         }
 
 #if DEBUG
         private void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
         {
             Console.WriteLine(((Exception)e.ExceptionObject).Message);
+            FlushInfoBuffer();
+        }
+
+        private void FlushInfoBuffer()
+        {
+            _device.QueryInterfaceOrNull<DebugDevice>().ReportLiveDeviceObjects(ReportingLevel.Summary);
             for (int i = 0; i < _infoQueue.NumStoredMessagesAllowedByRetrievalFilter; i++)
             {
                 var message = _infoQueue.GetMessage(i);
-                Debug.WriteLine($"DXERROR: {message.Description}");
+                if (message.Severity == MessageSeverity.Information)
+                {
+                    Debug.WriteLine($"DXMESSAGE: {message.Description}");
+                }
+                else
+                {
+                    Debug.WriteLine($"DXERROR: {message.Description}");
+                }
             }
         }
 
@@ -158,5 +172,13 @@ namespace _3DNet.Rendering.D3D12
 
         public IRenderContext CreateRenderContext(string name, Size size, bool fullScreen, Action<IRenderContextInternal> setActive)
         => new D3DRenderWindowContext(_device, _commandAllocator, _commandQueue, _d3DObjects, CreateWindow(size, name, fullScreen), setActive);
+        public void Begin(D3DRenderWindowContext context) { 
+        }
+        public void End(D3DRenderWindowContext context)
+        {
+#if DEBUG
+            FlushInfoBuffer();
+#endif
+        }
     }
 }

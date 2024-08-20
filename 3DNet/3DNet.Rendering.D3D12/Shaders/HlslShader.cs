@@ -102,7 +102,7 @@ namespace _3DNet.Rendering.D3D12.Shaders
         {
             return new SharpDX.Direct3D12.ShaderBytecode(SharpDX.D3DCompiler.ShaderBytecode.CompileFromFile(shaderFile, method, profile
 #if DEBUG
-                , ShaderFlags.WarningsAreErrors | ShaderFlags.Debug | ShaderFlags.SkipOptimization
+                , ShaderFlags.WarningsAreErrors | ShaderFlags.Debug | ShaderFlags.SkipOptimization | ShaderFlags.DebugNameForSource| ShaderFlags.DebugNameForBinary
 
 #endif
                 | ShaderFlags.PackMatrixRowMajor
