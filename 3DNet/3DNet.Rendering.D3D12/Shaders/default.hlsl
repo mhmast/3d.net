@@ -22,7 +22,7 @@ struct PSOutput
 float4 VSMain(VSInput input) : SV_POSITION
 {
 
-	return mul(float4(input.position, 1), wvp);
+	return mul(float4(input.position, 1.0), wvp);
 
 }
 

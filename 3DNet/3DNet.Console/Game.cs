@@ -32,17 +32,18 @@ namespace _3DNet.Console
             _scene.SetActiveScene();
             _context.SetActiveContext();
             var cubeModel = _modelFactory.CreateCube("cube", 10, 10, 10);
-            _scene.CreateStandardObject("cubez+",cubeModel).MoveTo(new Vector3(0, 0, 100));
-            _scene.CreateStandardObject("cubez-", cubeModel ).MoveTo(new Vector3(0,0,-100));
-            _scene.CreateStandardObject("cubex+", cubeModel ).MoveTo(new Vector3(100,0,0));
-            _scene.CreateStandardObject("cubex-", cubeModel).MoveTo(new Vector3(-100, 0, 0));
-            _scene.CreateStandardObject("cubey+", cubeModel).MoveTo(new Vector3(0, 100, 0));
-            _scene.CreateStandardObject("cubey-", cubeModel).MoveTo(new Vector3(0, -100, 0));
+            var cube = _scene.CreateStandardObject("cubez+", cubeModel);
+            cube.MoveTo(new Vector3(0, 0, 100));
+            //_scene.CreateStandardObject("cubez-", cubeModel ).MoveTo(new Vector3(0,0,-100));
+            //_scene.CreateStandardObject("cubex+", cubeModel ).MoveTo(new Vector3(100,0,0));
+            //_scene.CreateStandardObject("cubex-", cubeModel).MoveTo(new Vector3(-100, 0, 0));
+            //_scene.CreateStandardObject("cubey+", cubeModel).MoveTo(new Vector3(0, 100, 0));
+            //_scene.CreateStandardObject("cubey-", cubeModel).MoveTo(new Vector3(0, -100, 0));
 
-            //var cam = _scene.CreateStandardCamera("defaultcam");
-            //_scene.SetActiveCamera(cam);
-            //cam.MoveTo(new Vector3(0, 0, 0));
-            //cam.LookAt(cube);
+            var cam = _scene.CreateStandardCamera("defaultcam");
+            cam.SetActiveCamera();
+            cam.MoveTo(new Vector3(0, 0, 0));
+            cam.LookAt(cube);
         }
 
         public void Start()

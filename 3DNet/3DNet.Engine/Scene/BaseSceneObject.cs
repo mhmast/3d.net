@@ -8,9 +8,9 @@ namespace _3DNet.Engine.Scene
     internal abstract class BaseSceneObject : ISceneObject, IRenderable
     {
         private Vector3 _position = new Vector3(0, 0, 0);
-        private Vector3 _forward = new Vector3(0, 0, -1);
+        private Vector3 _forward = new Vector3(0, 0, 1);
         private Vector3 _up = new Vector3(0, 1, 0);
-        private Vector3 _right = new Vector3(-1, 0, 0);
+        private Vector3 _right = new Vector3(1, 0, 0);
         private Quaternion _rotationQuat = Quaternion.Identity;
         private Matrix4x4 _rotation = Matrix4x4.Identity;
         private Matrix4x4 _scale = Matrix4x4.Identity;
