@@ -3,7 +3,6 @@ using _3DNet.Engine.Rendering.Shader;
 using _3DNet.Rendering.Buffer;
 using System.Collections.Generic;
 using System.Linq;
-using System.Numerics;
 
 namespace _3DNet.Engine.Rendering.Model
 {

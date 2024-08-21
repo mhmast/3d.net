@@ -29,10 +29,6 @@ namespace _3DNet.Engine.Rendering.Shader
             {
                 throw new ArgumentException($"Buffer list did not contain a wvp buffer with name {wvpBufferName}");
             }
-            if (_buffers[wvpBufferName].DataType != typeof(Matrix4x4))
-            {
-                throw new ArgumentException($"Wvpbuffer with name {wvpBufferName} has an invalid {nameof(ShaderBufferDescription.DataType)}. It should be {typeof(Matrix4x4)}.");
-            }
             if (_buffers[wvpBufferName].Type != BufferType.GPUInput)
             {
                 throw new ArgumentException($"Wvpbuffer with name {wvpBufferName} has an invalid {nameof(ShaderBufferDescription.Type)}. It should be {BufferType.GPUInput}.");

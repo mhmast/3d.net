@@ -1,6 +1,7 @@
 ﻿
 using _3DNet.Engine.Engine;
 using _3DNet.Engine.Rendering;
+using _3DNet.Engine.Rendering.Shader;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace _3DNet.Engine.Extensions
@@ -11,7 +12,8 @@ namespace _3DNet.Engine.Extensions
             
             services.AddSingleton<Engine.Engine, Engine.Engine>()
             .AddSingleton<IEngine>(s=>s.GetRequiredService<Engine.Engine>())
-            .AddTransient<IRenderContextFactory,RenderContextFactory>();
+            .AddTransient<IRenderContextFactory,RenderContextFactory>()
+            .AddTransient<IShaderBufferDataAdapterBuilder,ShaderBufferDataConversionBuilder>();
               
     }
 }

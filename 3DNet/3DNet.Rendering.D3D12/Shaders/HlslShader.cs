@@ -19,7 +19,7 @@ namespace _3DNet.Rendering.D3D12.Shaders
         private PipelineState _graphicsPipelineState;
         private D3DRenderWindowContext _context;
         private RootSignature _rootSignature;
-        private string _wvpBufferName;
+        private readonly string _wvpBufferName;
 
         public HlslShader(string name, D3DRenderEngine d3DRenderEngine, Engine.Rendering.Shader.ShaderDescription shaderDescription)
         {
@@ -103,7 +103,7 @@ namespace _3DNet.Rendering.D3D12.Shaders
         {
             return new SharpDX.Direct3D12.ShaderBytecode(SharpDX.D3DCompiler.ShaderBytecode.CompileFromFile(shaderFile, method, profile
 #if DEBUG
-                , ShaderFlags.WarningsAreErrors | ShaderFlags.Debug | ShaderFlags.SkipOptimization | ShaderFlags.DebugNameForSource 
+                , ShaderFlags.WarningsAreErrors | ShaderFlags.Debug | ShaderFlags.SkipOptimization | ShaderFlags.DebugNameForSource
 
 #endif
                 | ShaderFlags.PackMatrixRowMajor

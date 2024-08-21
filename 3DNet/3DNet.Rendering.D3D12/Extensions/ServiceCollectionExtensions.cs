@@ -2,7 +2,6 @@
 using _3DNet.Engine.Rendering.Model;
 using _3DNet.Engine.Rendering.Shader;
 using _3DNet.Rendering.D3D12.Model;
-using _3DNet.Rendering.D3D12.Shaders;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace _3DNet.Rendering.D3D12.Extensions
@@ -13,7 +12,7 @@ namespace _3DNet.Rendering.D3D12.Extensions
             services.AddTransient<IRenderEngine, D3DRenderEngine>(s => s.GetRequiredService<D3DRenderEngine>())
             .AddSingleton(s =>
             {
-                var engine = new D3DRenderEngine();
+                var engine = new D3DRenderEngine(s.GetRequiredService<IShaderBufferDataAdapterBuilder>());
                 engine.Initialize();
                 return engine;
             })

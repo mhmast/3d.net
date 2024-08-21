@@ -2,15 +2,16 @@
 
 namespace _3DNet.Engine.Rendering.Shader
 {
-    public abstract class ShaderBufferDescription
+    public class ShaderBufferDescription
     {
-        protected ShaderBufferDescription(string name, int slot, BufferType type, BufferUsage bufferUsage,Type dataType)
+        private ShaderBufferDescription(string name, int slot, BufferType type, BufferUsage bufferUsage,Type dataType, IShaderBufferDataAdapter adapter)
         {
             Name = name;
             Slot = slot;
             Type = type;
             BufferUsage = bufferUsage;
             DataType = dataType;
+            DataAdapter = adapter;
         }
 
         public string Name { get; }
@@ -18,8 +19,9 @@ namespace _3DNet.Engine.Rendering.Shader
         public BufferType Type { get; }
         public BufferUsage BufferUsage { get;}
         public Type DataType { get; }
+        public IShaderBufferDataAdapter DataAdapter { get; }
 
-        public static ShaderBufferDescription Create<TIn,TOut>
+        public static ShaderBufferDescription Create<TBuffer>(string name, int slot, BufferType type, BufferUsage bufferUsage,IShaderBufferDataAdapter adapter) => new(name, slot, type, bufferUsage, typeof(TBuffer),adapter);
 
     }
 

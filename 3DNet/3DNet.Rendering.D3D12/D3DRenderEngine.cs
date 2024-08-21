@@ -12,10 +12,8 @@ using System.Linq;
 using _3DNet.Rendering.D3D12.Shaders;
 using _3DNet.Engine.Rendering.Shader;
 using System.IO;
-using SharpDX;
-using System.Numerics;
-using _3DNet.Rendering.Buffer;
 using System.Diagnostics;
+using System.Numerics;
 
 namespace _3DNet.Rendering.D3D12
 {
@@ -34,6 +32,11 @@ namespace _3DNet.Rendering.D3D12
         private readonly string _basePath = new FileInfo(typeof(D3DRenderEngine).Assembly.Location).DirectoryName;
         private readonly IDictionary<string, HlslShader> _shaders = new Dictionary<string, HlslShader>();
 
+        public D3DRenderEngine(IShaderBufferDataAdapterBuilder shaderBufferDataAdapterBuilder)
+        {
+            _shaderBufferDataConverterBuilder = shaderBufferDataAdapterBuilder;
+        }
+
         internal void CreateConstantBufferView(ConstantBufferViewDescription cbvDesc, CpuDescriptorHandle cPUDescriptorHandleForHeapStart)
         => _device.CreateConstantBufferView(cbvDesc, cPUDescriptorHandleForHeapStart);
 
@@ -42,6 +45,7 @@ namespace _3DNet.Rendering.D3D12
         internal Format[] RenderTargetFormats => _activeTargets.Values.Select(t => t.Format).ToArray();
 
         private readonly List<ID3DObject> _d3DObjects = new();
+        private readonly IShaderBufferDataAdapterBuilder _shaderBufferDataConverterBuilder;
 
         public event Action RenderTargetCreated;
         public event Action RenderTargetDropped;
@@ -122,7 +126,8 @@ namespace _3DNet.Rendering.D3D12
 
             _commandQueue = _device.CreateCommandQueue(new CommandQueueDescription(CommandListType.Direct));
             _commandAllocator = _device.CreateCommandAllocator(CommandListType.Direct);
-            var buffers = new[] { new ShaderBufferDescription<WvpBuffer>("globals", 0, BufferType.GPUInput, BufferUsage.VertexShader) };
+            var bufferAdapter = _shaderBufferDataConverterBuilder.AddConverter<Matrix4x4, WvpBuffer>(m => (WvpBuffer)m).Build();
+            var buffers = new[] { ShaderBufferDescription.Create<WvpBuffer>("globals", 0, BufferType.GPUInput, BufferUsage.VertexShader, bufferAdapter) };
             var defaultShaderDescription = new ShaderDescription(Path.Combine(_basePath, "Shaders", "default.hlsl"), "vs_5_0", "VSMain", "ps_5_0", "PSMain", buffers, "globals");
             DefaultShader = LoadShader("Default", defaultShaderDescription);
             RegisterD3DObject(this);

@@ -8,7 +8,7 @@ using System.Runtime.InteropServices;
 
 namespace _3DNet.Rendering.D3D12.Buffer
 {
-    internal class D3D12ShaderBuffer : IWritableBuffer
+    internal class D3D12ShaderBuffer : IWritableBuffer, IBufferWriter
     {
         private readonly Resource _buffer;
         private readonly ShaderBufferDescription _bufferDesc;
@@ -17,6 +17,7 @@ namespace _3DNet.Rendering.D3D12.Buffer
         public int Length { get; }
         public long SizeInBytes { get; }
 
+        private readonly IShaderBufferDataAdapter _dataAdapter;
 
         public D3D12ShaderBuffer(D3DRenderEngine d3DRenderEngine, DescriptorHeap shaderHeap, ShaderBufferDescription bufferDesc)
         {
@@ -40,6 +41,11 @@ namespace _3DNet.Rendering.D3D12.Buffer
             _d3DRenderEngine.CreateConstantBufferView(cbvDesc, _shaderHeap.CPUDescriptorHandleForHeapStart);
             Length = 1;
             SizeInBytes = size;
+            _dataAdapter = bufferDesc.DataAdapter;
+        }
+
+        public D3D12ShaderBuffer()
+        {
         }
 
         private static ResourceStates GetResourceState(BufferUsage bufferUsage)
@@ -96,14 +102,14 @@ namespace _3DNet.Rendering.D3D12.Buffer
         public unsafe void Write<T>(T value)
             where T : struct
         {
-            if (SizeInBytes < Utilities.SizeOf<T>())
-            {
-                throw new ArgumentException("The size of this buffer cannot be extended");
-            }
-            var addr = _buffer.Map(0);
-            Utilities.Write(addr, ref value);
-            _buffer.Unmap(0);
+            _dataAdapter.ConvertAndWrite(value, this);
+        }
 
+        unsafe void IBufferWriter.Write<T>(T o) where T : struct
+        {
+            var addr = _buffer.Map(0);
+            Utilities.Write(addr, ref o);
+            _buffer.Unmap(0);
         }
     }
 }
