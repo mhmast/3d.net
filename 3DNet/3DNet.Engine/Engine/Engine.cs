@@ -46,7 +46,7 @@ namespace _3DNet.Engine.Engine
                 }
                 if (!_context.IsDisposed)
                 {
-                    _context.SetProjection(_context.RenderWindow.Projection);
+                    //_context.SetProjection(_context.RenderWindow.Projection);
                     _activeScene.Render(_context,sw.ElapsedMilliseconds);
                 }
             }
