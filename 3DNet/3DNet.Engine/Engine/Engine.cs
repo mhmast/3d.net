@@ -36,8 +36,7 @@ namespace _3DNet.Engine.Engine
                 return;
             }
             _running = true;
-            var sw = new Stopwatch();
-            sw.Start();
+            long frame = 1;
             while (_running)
             {
                 foreach (var scene in _scenes.Values)
@@ -47,10 +46,10 @@ namespace _3DNet.Engine.Engine
                 if (!_context.IsDisposed)
                 {
                     //_context.SetProjection(_context.RenderWindow.Projection);
-                    _activeScene.Render(_context,sw.ElapsedMilliseconds);
+                    _activeScene.Render(_context,frame);
                 }
+                frame++;
             }
-            sw.Stop();
         }
 
         public void Stop() => _running = false;

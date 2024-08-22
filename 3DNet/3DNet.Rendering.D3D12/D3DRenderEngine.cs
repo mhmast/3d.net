@@ -74,7 +74,7 @@ namespace _3DNet.Rendering.D3D12
             return form;
         }
 
-        internal SwapChain CreateSwapChain(SwapChainDescription swapChainDescription)
+        internal SwapChain3 CreateSwapChain(SwapChainDescription swapChainDescription)
         {
             using var factory = new Factory4();
             var tempSwapChain = new SwapChain(factory, _commandQueue, swapChainDescription);
@@ -188,5 +188,7 @@ namespace _3DNet.Rendering.D3D12
             //FlushInfoBuffer();
 #endif
         }
+
+        internal int GetRenderTargetDescriptorHandleIncrementSize() => _device.GetDescriptorHandleIncrementSize(DescriptorHeapType.RenderTargetView);
     }
 }

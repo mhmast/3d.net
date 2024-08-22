@@ -39,9 +39,9 @@ namespace _3DNet.Engine.Scene
             return obj;
         }
 
-        public void Render(IRenderContextInternal context, long ms)
+        public void Render(IRenderContextInternal context, long frame)
         {
-            bool success = context.BeginScene(BackgroundColor, ms);
+            bool success = context.BeginScene(BackgroundColor, frame);
             if (!success)
             {
                 return;
@@ -51,7 +51,7 @@ namespace _3DNet.Engine.Scene
             {
                 obj.Render(context);
             }
-            context.EndScene(ms);
+            context.EndScene(frame);
         }
 
         public void Update()

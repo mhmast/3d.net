@@ -10,28 +10,29 @@ using System.Windows.Forms;
 
 namespace _3DNet.Rendering.D3D12
 {
-    internal partial class D3DRenderForm : Form, IRenderWindow, ID3DRenderTarget, ID3DObject
+    internal partial class D3DRenderForm : Form, IRenderWindow, ID3DRenderTarget
     {
         const int FrameCount = 2;
-        private SwapChain _swapChain;
+        private SwapChain3 _swapChain;
         private SwapChainDescription _swapChainDescription;
 
         private readonly D3DRenderEngine _engine;
         private readonly bool _fullScreen;
-        private SharpDX.Direct3D12.Resource _backBuffer1;
-        private SharpDX.Direct3D12.Resource _backBuffer2;
-        private SharpDX.Direct3D12.Resource _activeBackBuffer;
+        //private SharpDX.Direct3D12.Resource _backBuffer1;
+        //private SharpDX.Direct3D12.Resource _backBuffer2;
+        //private SharpDX.Direct3D12.Resource _activeBackBuffer;
         private Action _a;
         private DescriptorHeap _renderTargetViewHeap;
         private DescriptorHeap _depthStencilViewHeap;
         private DescriptorHeap _constantBufferViewHeap;
         private CpuDescriptorHandle _renderView;
         private SharpDX.Direct3D12.Resource _depthStencilBuffer;
+        private readonly SharpDX.Direct3D12.Resource[] _backBuffers = new SharpDX.Direct3D12.Resource[FrameCount];
         private CpuDescriptorHandle _depthStencilView;
-        private bool _buffer1Reset = true;
-        private bool _buffer2Reset = true;
         private RawViewportF _viewport;
         private RawRectangle _scissorRect;
+        private int _renderViewIncrementSize;
+        private int _frameIndex;
 
         public Matrix4x4 Projection { get; private set; }
 
@@ -50,7 +51,6 @@ namespace _3DNet.Rendering.D3D12
             _engine = engine;
             _fullScreen = fullScreen;
             ReCreateSwapchainDescription();
-            engine.RegisterD3DObject(this);
         }
 
         private void CreateSwapchainResources()
@@ -95,11 +95,26 @@ namespace _3DNet.Rendering.D3D12
             _renderView = _renderTargetViewHeap.CPUDescriptorHandleForHeapStart;
             _depthStencilView = _depthStencilViewHeap.CPUDescriptorHandleForHeapStart;
 
-            _backBuffer1 = _swapChain.GetBackBuffer<SharpDX.Direct3D12.Resource>(0);
-            _backBuffer1.Name = $"bb1_{Name}";
-            _backBuffer2 = _swapChain.GetBackBuffer<SharpDX.Direct3D12.Resource>(1);
-            _backBuffer2.Name = $"bb2_{Name}";
-            _activeBackBuffer = _backBuffer1;
+            var backBuffer1 = _swapChain.GetBackBuffer<SharpDX.Direct3D12.Resource>(0);
+            backBuffer1.Name = $"bb1_{Name}";
+            _backBuffers[0] = backBuffer1;
+            _renderViewIncrementSize = _engine.GetRenderTargetDescriptorHandleIncrementSize();
+            _engine.CreateRenderTargetView(backBuffer1, null, _renderView);
+            var backBuffer2 = _swapChain.GetBackBuffer<SharpDX.Direct3D12.Resource>(1);
+            backBuffer2.Name = $"bb2_{Name}";
+            _backBuffers[1] = backBuffer2;
+            _engine.CreateRenderTargetView(backBuffer2, null, _renderView + _renderViewIncrementSize);
+
+            var depthStencilBufferDesc = ResourceDescription.Texture2D(Format.D32_Float, ClientSize.Width, ClientSize.Height, flags: ResourceFlags.AllowDepthStencil);
+            ClearValue? clearValue = new()
+            {
+                Color = new RawVector4(0, 0, 0, 0),
+                DepthStencil = new DepthStencilValue { Depth = 1, Stencil = 5 },
+                Format = Format.D32_Float
+            };
+            _depthStencilBuffer = _engine.CreateCommittedResource(new HeapProperties(HeapType.Default), HeapFlags.None, depthStencilBufferDesc, ResourceStates.DepthWrite, clearValue);
+            _depthStencilBuffer.Name = $"dsb_{Name}";
+            _engine.CreateDepthStencilView(_depthStencilBuffer, null, _depthStencilView);
             ReCreateBuffers();
         }
 
@@ -137,11 +152,9 @@ namespace _3DNet.Rendering.D3D12
 
             if (disposing)
             {
-                _engine.UnregisterD3DObject(this);
                 components?.Dispose();
                 _depthStencilBuffer?.Dispose();
                 _depthStencilViewHeap?.Dispose();
-                _backBuffer1?.Dispose();
                 _swapChain?.Dispose();
                 _renderTargetViewHeap?.Dispose();
             }
@@ -153,7 +166,7 @@ namespace _3DNet.Rendering.D3D12
         public void Clear(IRenderContextInternal context, Color clearColor)
         {
             context.ClearDepthStencilView(_depthStencilView.Ptr, 1, 5);
-            context.ClearRenderTargetView(_renderView.Ptr, clearColor);
+            context.ClearRenderTargetView((_renderView + (_frameIndex * _renderViewIncrementSize)).Ptr, clearColor);
         }
 
         protected override void OnClientSizeChanged(EventArgs e)
@@ -195,16 +208,6 @@ namespace _3DNet.Rendering.D3D12
             //_buffer1Reset = true;
             //_buffer2Reset = true;
 
-            var depthStencilBufferDesc = ResourceDescription.Texture2D(Format.D32_Float, ClientSize.Width, ClientSize.Height, flags: ResourceFlags.AllowDepthStencil);
-            ClearValue? clearValue = new()
-            {
-                Color = new RawVector4(0, 0, 0, 0),
-                DepthStencil = new DepthStencilValue { Depth = 1, Stencil = 5 },
-                Format = Format.D32_Float
-            };
-            _depthStencilBuffer = _engine.CreateCommittedResource(new HeapProperties(HeapType.Default), HeapFlags.None, depthStencilBufferDesc, ResourceStates.DepthWrite, clearValue);
-            _depthStencilBuffer.Name = $"dsb_{Name}";
-            _engine.CreateDepthStencilView(_depthStencilBuffer, null, _depthStencilView);
 
             _viewport = new RawViewportF { X = 0, Y = 0, Width = Width, Height = Height, MinDepth = 0, MaxDepth = 200 };
             _scissorRect = new RawRectangle { Left = 0, Top = 0, Right = Width, Bottom = Height };
@@ -219,31 +222,19 @@ namespace _3DNet.Rendering.D3D12
 
         public void Begin(D3DRenderWindowContext context)
         {
-
-            if (_buffer1Reset && _activeBackBuffer == _backBuffer1)
-            {
-                context.ResourceBarrierTransition(_backBuffer1, ResourceStates.Common, ResourceStates.RenderTarget);
-                _buffer1Reset = false;
-            }
-            else if (_buffer2Reset && _activeBackBuffer == _backBuffer2)
-            {
-                context.ResourceBarrierTransition(_backBuffer2, ResourceStates.Common, ResourceStates.RenderTarget);
-                _buffer2Reset = false;
-            }
-            else
-            {
-                context.ResourceBarrierTransition(_activeBackBuffer, ResourceStates.Present, ResourceStates.RenderTarget);
-            }
-            _engine.CreateRenderTargetView(_activeBackBuffer, null, _renderView);
+            _frameIndex = _swapChain.CurrentBackBufferIndex;
+         
             context.SetViewport(_viewport);
             context.SetScissorRect(_scissorRect);
+            context.ResourceBarrierTransition(_backBuffers[_frameIndex], ResourceStates.Present, ResourceStates.RenderTarget);
+            context.SetRenderTarget(_renderView + (_frameIndex * _renderViewIncrementSize), _depthStencilView);
+
             //context.SetProjection(Projection);
         }
 
         public void End(D3DRenderWindowContext context)
         {
-            context.ResourceBarrierTransition(_activeBackBuffer, ResourceStates.RenderTarget, ResourceStates.Present);
-            _activeBackBuffer = _activeBackBuffer == _backBuffer1 ? _backBuffer2 : _backBuffer1;
+            context.ResourceBarrierTransition(_backBuffers[_frameIndex], ResourceStates.RenderTarget, ResourceStates.Present);
         }
     }
 }

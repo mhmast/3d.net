@@ -6,8 +6,8 @@ namespace _3DNet.Engine.Rendering
 {
     public interface IRenderContextInternal : IRenderContext
     {
-        bool BeginScene(Color backgroundColor, long ms);
-        void EndScene(long ms);
+        bool BeginScene(Color backgroundColor, long frame);
+        void EndScene(long frame);
         void ClearDepthStencilView(IntPtr ptr, float depth, byte stencil);
         void ClearRenderTargetView(IntPtr ptr, Color clearColor);
         void SetVertexBuffer(IntPtr bufferLocation, int sizeInBytes, int strideInBytes);

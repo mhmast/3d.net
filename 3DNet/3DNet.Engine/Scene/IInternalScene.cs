@@ -4,6 +4,6 @@ namespace _3DNet.Engine.Scene
 {
     internal interface ISceneInternal : IScene
     {
-        void Render(IRenderContextInternal context, long ms);
+        void Render(IRenderContextInternal context, long frame);
     }
 }
