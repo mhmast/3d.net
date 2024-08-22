@@ -19,7 +19,7 @@ namespace _3DNet.Engine.Rendering.Model
         
         public void Render(IRenderContextInternal context)
         {
-            Shader.WvpBuffer.Write(context.WorldViewProjection);
+            Shader.WvpBuffer.Write(context.WvpBuffer);
             Shader.Load(context);
             context.Draw(_vertexBuffer,_indexBuffer);
         }

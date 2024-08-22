@@ -41,7 +41,7 @@ namespace _3DNet.Engine.Rendering.Shader
 
         public string PixelShaderMethod { get; }
 
-        private Dictionary<string, ShaderBufferDescription> _buffers;
+        private readonly Dictionary<string, ShaderBufferDescription> _buffers;
 
         public ShaderDescription(Dictionary<string, ShaderBufferDescription> buffers) => _buffers = buffers;
 

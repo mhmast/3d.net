@@ -1,4 +1,5 @@
 ﻿using _3DNet.Engine.Rendering;
+using _3DNet.Engine.Rendering.Buffer;
 using _3DNet.Math.Extensions;
 using _3DNet.Rendering.Buffer;
 using SharpDX.Direct3D;
@@ -24,11 +25,7 @@ namespace _3DNet.Rendering.D3D12
         private readonly D3DRenderForm _d3DRenderForm;
         private readonly Action<IRenderContextInternal> _setActive;
         private bool _disposing;
-        private Matrix4x4 _world = Matrix4x4.Identity;
-        private Matrix4x4 _worldViewProjection;
-        private Matrix4x4 _projection = Matrix4x4.Identity;
-        private Matrix4x4 _view = Matrix4x4.Identity;
-        private readonly byte[] _worldViewProjectionBytes = new byte[sizeof(float) * 16];
+        private WvpBuffer _worldViewProjectionBuffer = new();
         private readonly Fence _fence;
 
         public D3DRenderWindowContext(Device device, CommandAllocator commandAllocator, CommandQueue commandQueue, IEnumerable<ID3DObject> d3DObjects, D3DRenderForm d3DRenderForm, Action<IRenderContextInternal> setActive)
@@ -47,40 +44,8 @@ namespace _3DNet.Rendering.D3D12
         public IRenderWindow RenderWindow => _d3DRenderForm;
 
         public bool IsDisposed { get; private set; }
-        public Matrix4x4 View
-        {
-            get => _view; private set
-            {
-                if (_view != value)
-                {
-                    _view = value;
-                    _worldViewProjection = _world * _view * _projection;
-                }
-            }
-        }
-        public Matrix4x4 Projection
-        {
-            get => _projection; private set
-            {
-                if (_projection != value)
-                {
-                    _projection = value;
-                    _worldViewProjection = _world * _view * _projection;
-                }
-            }
-        }
-        public Matrix4x4 World
-        {
-            get => _world; private set
-            {
-                if (_world != value)
-                {
-                    _world = value;
-                    _worldViewProjection = _world * _view * _projection;
-                }
-            }
-        }
-        public Matrix4x4 WorldViewProjection => _worldViewProjection;
+
+        public WvpBuffer WvpBuffer => _worldViewProjectionBuffer;
 
         public bool BeginScene(Color backgroundColor, long ms)
         {
@@ -151,15 +116,15 @@ namespace _3DNet.Rendering.D3D12
         };
 
         public void SetProjection(Matrix4x4 projection)
-        => _commandQueue.Enqueue(c => Projection = projection);
+        => _commandQueue.Enqueue(c => _worldViewProjectionBuffer.projection = projection);
 
         public void SetVertexBuffer(IntPtr bufferLocation, int sizeInBytes, int strideInBytes)
         => _commandQueue.Enqueue(c => c.SetVertexBuffer(0, new VertexBufferView { BufferLocation = bufferLocation.ToInt64(), SizeInBytes = sizeInBytes, StrideInBytes = strideInBytes }));
 
         public void SetView(Matrix4x4 view)
-        => _commandQueue.Enqueue(c => View = view);
+        => _commandQueue.Enqueue(c => _worldViewProjectionBuffer.view = view);
         public void SetWorld(Matrix4x4 world)
-        => _commandQueue.Enqueue(c => World = world);
+        => _commandQueue.Enqueue(c => _worldViewProjectionBuffer.world = world);
 
         internal void ResourceBarrierTransition(Resource buffer, ResourceStates oldState, ResourceStates newState)
        => _commandQueue.Enqueue(c => c.ResourceBarrierTransition(buffer, oldState, newState));

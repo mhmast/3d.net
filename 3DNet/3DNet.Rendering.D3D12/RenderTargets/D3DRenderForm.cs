@@ -206,7 +206,7 @@ namespace _3DNet.Rendering.D3D12
             _depthStencilBuffer.Name = $"dsb_{Name}";
             _engine.CreateDepthStencilView(_depthStencilBuffer, null, _depthStencilView);
 
-            _viewport = new RawViewportF { X = 0, Y = 0, Width = Width, Height = Height, MinDepth = 0, MaxDepth = 1 };
+            _viewport = new RawViewportF { X = 0, Y = 0, Width = Width, Height = Height, MinDepth = 0, MaxDepth = 200 };
             _scissorRect = new RawRectangle { Left = 0, Top = 0, Right = Width, Bottom = Height };
         }
 

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using _3DNet.Engine.Rendering.Buffer;
+using System;
 using System.Numerics;
 
 namespace _3DNet.Engine.Rendering
@@ -7,10 +8,7 @@ namespace _3DNet.Engine.Rendering
     {
         IRenderWindow RenderWindow { get; }
         bool IsDisposed { get; }
-        Matrix4x4 World { get; }
-        Matrix4x4 View { get; }
-        Matrix4x4 Projection { get; }
-        Matrix4x4 WorldViewProjection { get; }
+        WvpBuffer WvpBuffer{ get; }
         void SetWorld(Matrix4x4 world);
         void SetView(Matrix4x4 view);
         void SetProjection(Matrix4x4 projection);

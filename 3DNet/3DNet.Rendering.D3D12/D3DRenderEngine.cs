@@ -6,6 +6,7 @@ using SharpDX.Direct3D;
 using SharpDX.Direct3D12;
 using System.Collections.Generic;
 using _3DNet.Rendering.D3D12.Buffer;
+using NativeWvpBuffer = _3DNet.Rendering.D3D12.Buffer.WvpBuffer;
 using System;
 using _3DNet.Rendering.D3D12.RenderTargets;
 using System.Linq;
@@ -13,7 +14,7 @@ using _3DNet.Rendering.D3D12.Shaders;
 using _3DNet.Engine.Rendering.Shader;
 using System.IO;
 using System.Diagnostics;
-using System.Numerics;
+using WvpBuffer = _3DNet.Engine.Rendering.Buffer.WvpBuffer;
 
 namespace _3DNet.Rendering.D3D12
 {
@@ -126,8 +127,8 @@ namespace _3DNet.Rendering.D3D12
 
             _commandQueue = _device.CreateCommandQueue(new CommandQueueDescription(CommandListType.Direct));
             _commandAllocator = _device.CreateCommandAllocator(CommandListType.Direct);
-            var bufferAdapter = _shaderBufferDataConverterBuilder.AddConverter<Matrix4x4, WvpBuffer>(m => (WvpBuffer)m).Build();
-            var buffers = new[] { ShaderBufferDescription.Create<WvpBuffer>("globals", 0, BufferType.GPUInput, BufferUsage.VertexShader, bufferAdapter) };
+            var bufferAdapter = _shaderBufferDataConverterBuilder.AddConverter<WvpBuffer, NativeWvpBuffer>(m => (NativeWvpBuffer)m).Build();
+            var buffers = new[] { ShaderBufferDescription.Create<NativeWvpBuffer>("globals", 0, BufferType.GPUInput, BufferUsage.VertexShader, bufferAdapter) };
             var defaultShaderDescription = new ShaderDescription(Path.Combine(_basePath, "Shaders", "default.hlsl"), "vs_5_0", "VSMain", "ps_5_0", "PSMain", buffers, "globals");
             DefaultShader = LoadShader("Default", defaultShaderDescription);
             RegisterD3DObject(this);

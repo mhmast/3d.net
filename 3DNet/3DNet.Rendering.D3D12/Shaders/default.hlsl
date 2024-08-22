@@ -1,7 +1,9 @@
 ﻿
 cbuffer globals
 {
-	matrix wvp;
+	matrix world;
+	matrix view;
+	matrix projection;
 };
 
 struct VSInput
@@ -21,7 +23,7 @@ struct PSOutput
 
 float4 VSMain(VSInput input) : SV_POSITION
 {
-
+    float4x4 wvp = mul(mul(world, view), projection);
 	return mul(float4(input.position, 1.0), wvp);
 
 }

@@ -8,9 +8,9 @@ namespace _3DNet.Engine.Scene
     internal abstract class BaseSceneObject : ISceneObject, IRenderable
     {
         private Vector3 _position = new Vector3(0, 0, 0);
-        private Vector3 _forward = new Vector3(0, 0, -1);
-        private Vector3 _up = new Vector3(0, -1, 0);
-        private Vector3 _right = new Vector3(-1, 0, 0);
+        private Vector3 _forward = new Vector3(0, 0, 1);
+        private Vector3 _up = new Vector3(0, 1, 0);
+        private Vector3 _right = new Vector3(1, 0, 0);
         private Quaternion _rotationQuat = Quaternion.Identity;
         private Matrix4x4 _rotation = Matrix4x4.Identity;
         private Matrix4x4 _scale = Matrix4x4.Identity;
@@ -43,7 +43,25 @@ namespace _3DNet.Engine.Scene
 
         private void ReCalculateWorld()
         {
-            World = Matrix4x4.CreateWorld(_position, _forward, _up);
+            World = new Matrix4x4
+            {
+                M11 = _right.X,
+                M12 = _right.Y,
+                M13 = _right.Z,
+                M14 = 0,
+                M21 = _up.X,
+                M22 = _up.Y,
+                M23 = _up.Z,
+                M24 = 0,
+                M31 = _forward.X,
+                M32 = _forward.Y,
+                M33 = _forward.Z,
+                M34 = 0,
+                M41 = _position.X,
+                M42 = _position.Y,
+                M43 = _position.Z,
+                M44 = 1
+            } ;
         }
 
         public abstract void Render(IRenderContextInternal context);
