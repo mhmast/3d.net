@@ -34,6 +34,7 @@ namespace _3DNet.Console
             var cubeModel = _modelFactory.CreateCube("cube", 10, 10, 10);
             var cube = _scene.CreateStandardObject("cubez+", cubeModel);
             cube.MoveTo(new Vector3(0, 0, 100));
+            cube.Resize(new Vector3(1,1,1));
             //_scene.CreateStandardObject("cubez-", cubeModel ).MoveTo(new Vector3(0,0,-100));
             //_scene.CreateStandardObject("cubex+", cubeModel ).MoveTo(new Vector3(100,0,0));
             //_scene.CreateStandardObject("cubex-", cubeModel).MoveTo(new Vector3(-100, 0, 0));

@@ -31,7 +31,7 @@ namespace _3DNet.Engine.Scene
             }
         }
 
-        public ISceneObject CreateStandardObject(string name, IModel model)
+        public IStandardSceneObject CreateStandardObject(string name, IModel model)
         {
             CheckSceneObjectOrThrow(name);
             var obj = new StandardSceneObject(this, name, model);

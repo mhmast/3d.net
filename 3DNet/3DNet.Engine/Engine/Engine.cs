@@ -1,8 +1,6 @@
 ﻿using _3DNet.Engine.Rendering;
 using _3DNet.Engine.Scene;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Numerics;
 
 namespace _3DNet.Engine.Engine
 {
@@ -45,14 +43,18 @@ namespace _3DNet.Engine.Engine
                 }
                 if (!_context.IsDisposed)
                 {
-                    //_context.SetProjection(_context.RenderWindow.Projection);
-                    _activeScene.Render(_context,frame);
+                    _context.SetProjection(_context.RenderWindow.Projection);
+                    _activeScene.Render(_context, frame);
                 }
                 frame++;
             }
+            _context.Dispose();
         }
 
-        public void Stop() => _running = false;
+        public void Stop()
+        {
+            _running = false;
+        }
 
         public void SetActiveScene(ISceneInternal scene)
         {

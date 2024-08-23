@@ -30,7 +30,7 @@ namespace _3DNet.Rendering.D3D12
         private WvpBuffer _worldViewProjectionBuffer = new();
         private long _currentFrame;
         private PipelineState _lastKnownPipelineState;
-        private readonly Fence _fence;
+        private readonly Fence _d3DFence;
 
         public D3DRenderWindowContext(Device device, CommandAllocator commandAllocator, CommandQueue commandQueue, IEnumerable<ID3DObject> d3DObjects, D3DRenderForm d3DRenderForm, Action<IRenderContextInternal> setActive)
         {
@@ -42,9 +42,7 @@ namespace _3DNet.Rendering.D3D12
             _d3DObjects = d3DObjects;
             _d3DRenderForm = d3DRenderForm;
             _setActive = setActive;
-            _d3DRenderForm.Disposed += (_, __) => Dispose();
-            _d3DRenderForm.FormClosed += (_, __) => _d3DRenderForm.Dispose();
-            _fence = _d3DDevice.CreateFence(0, FenceFlags.None);
+            _d3DFence = _d3DDevice.CreateFence(0, FenceFlags.None);
         }
 
         public IRenderWindow RenderWindow => _d3DRenderForm;
@@ -95,10 +93,10 @@ namespace _3DNet.Rendering.D3D12
 
         private void WaitForFrameToComplete(long frame)
         {
-            _d3DCommandQueue.Signal(_fence, frame);
-            if (_fence.CompletedValue < frame)
+            _d3DCommandQueue.Signal(_d3DFence, frame);
+            if (_d3DFence.CompletedValue < frame)
             {
-                _fence.SetEventOnCompletion(frame, _renderHandle.SafeWaitHandle.DangerousGetHandle());
+                _d3DFence.SetEventOnCompletion(frame, _renderHandle.SafeWaitHandle.DangerousGetHandle());
                 _renderHandle.WaitOne();
             }
         }
@@ -120,7 +118,11 @@ namespace _3DNet.Rendering.D3D12
             {
                 _d3DRenderForm.Dispose();
             }
-            _fence.Dispose();
+            _d3DCommandAllocator.Dispose();
+            _d3DCommandList.Dispose();
+            _d3DCommandQueue.Dispose();
+            _d3DDevice.Dispose();
+            _d3DFence.Dispose();
             _disposing = false;
             IsDisposed = true;
         }

@@ -4,6 +4,7 @@ using SharpDX.Direct3D12;
 using SharpDX.DXGI;
 using SharpDX.Mathematics.Interop;
 using System;
+using System.ComponentModel;
 using System.Drawing;
 using System.Numerics;
 using System.Windows.Forms;
@@ -21,7 +22,7 @@ namespace _3DNet.Rendering.D3D12
         //private SharpDX.Direct3D12.Resource _backBuffer1;
         //private SharpDX.Direct3D12.Resource _backBuffer2;
         //private SharpDX.Direct3D12.Resource _activeBackBuffer;
-        private Action _a;
+        private Action _onClosedAction;
         private DescriptorHeap _renderTargetViewHeap;
         private DescriptorHeap _depthStencilViewHeap;
         private DescriptorHeap _constantBufferViewHeap;
@@ -40,8 +41,8 @@ namespace _3DNet.Rendering.D3D12
 
         event Action IRenderWindow.OnClosed
         {
-            add { _a += value; }
-            remove { _a -= value; }
+            add { _onClosedAction += value; }
+            remove { _onClosedAction -= value; }
         }
 
         public D3DRenderForm(D3DRenderEngine engine, string name, bool fullScreen)
@@ -141,10 +142,9 @@ namespace _3DNet.Rendering.D3D12
 
 
 
-        protected override void OnClosed(EventArgs e)
+        protected override void OnClosing(CancelEventArgs e)
         {
-            Dispose();
-            _a?.DynamicInvoke();
+            _onClosedAction?.DynamicInvoke();
         }
 
         protected override void Dispose(bool disposing)

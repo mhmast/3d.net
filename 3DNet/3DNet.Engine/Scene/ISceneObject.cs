@@ -14,7 +14,6 @@ namespace _3DNet.Engine.Scene
 
         void MoveForward(Vector3 relativeAmount);
         void MoveTo(Vector3 position);
-
         void Rotate(Vector3 axis,float angle);
 
     }

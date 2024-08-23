@@ -12,8 +12,6 @@ namespace _3DNet.Engine.Scene
         private Vector3 _up = new Vector3(0, 1, 0);
         private Vector3 _right = new Vector3(1, 0, 0);
         private Quaternion _rotationQuat = Quaternion.Identity;
-        private Matrix4x4 _rotation = Matrix4x4.Identity;
-        private Matrix4x4 _scale = Matrix4x4.Identity;
 
         protected BaseSceneObject(Scene scene, string name)
         {
@@ -27,9 +25,11 @@ namespace _3DNet.Engine.Scene
 
         protected virtual void OnScaleChanged() { }
 
+        protected virtual void OnWorldRecalculated() { }
+
         public IScene Scene => SceneInternal;
         internal protected Scene SceneInternal { get; }
-        public Matrix4x4 World { get; private set; }
+        public Matrix4x4 World { get; protected set; }
         public string Name { get; }
 
         public Vector3 Position => _position;
@@ -41,7 +41,7 @@ namespace _3DNet.Engine.Scene
         public Vector3 Right => _right;
 
 
-        private void ReCalculateWorld()
+        protected void ReCalculateWorld()
         {
             World = new Matrix4x4
             {
@@ -61,7 +61,8 @@ namespace _3DNet.Engine.Scene
                 M42 = _position.Y,
                 M43 = _position.Z,
                 M44 = 1
-            } ;
+            };
+            OnWorldRecalculated();
         }
 
         public abstract void Render(IRenderContextInternal context);
@@ -99,5 +100,7 @@ namespace _3DNet.Engine.Scene
             ReCalculateWorld();
             OnRotationChanged();
         }
+
+       
     }
 }
