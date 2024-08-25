@@ -1,5 +1,6 @@
 ﻿using _3DNet.Engine.Rendering;
 using _3DNet.Engine.Scene;
+using System;
 using System.Collections.Generic;
 
 namespace _3DNet.Engine.Engine
@@ -18,13 +19,16 @@ namespace _3DNet.Engine.Engine
 
         internal void SetActiveContext(IRenderContextInternal context) => _context = context;
 
-        public IScene GetOrCreateScene(string name)
+        public void CreateScene(string name, ISceneImpl impl)
         {
             if (!_scenes.ContainsKey(name))
             {
-                _scenes.Add(name, new Scene.Scene(name,this));
+                _scenes.Add(name, new Scene.Scene(name, this, impl));
             }
-            return _scenes[name];
+            else
+            {
+                throw new ArgumentException($"A scene with name {name} already exists");
+            }
         }
 
         public void Start()
@@ -35,25 +39,26 @@ namespace _3DNet.Engine.Engine
             }
             _running = true;
             long frame = 1;
+            foreach (var scene in _scenes.Values)
+            {
+                scene.Init();
+            }
             while (_running)
             {
-                foreach (var scene in _scenes.Values)
-                {
-                    scene.Update();
-                }
+                _activeScene.Update();
                 if (!_context.IsDisposed)
                 {
                     _context.SetProjection(_context.RenderWindow.Projection);
                     _activeScene.Render(_context, frame);
                 }
                 frame++;
-            }
-            _context.Dispose();
+            } 
         }
 
         public void Stop()
         {
             _running = false;
+            _context.Dispose();
         }
 
         public void SetActiveScene(ISceneInternal scene)

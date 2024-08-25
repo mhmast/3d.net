@@ -10,14 +10,16 @@ namespace _3DNet.Engine.Scene
     {
         private readonly Dictionary<string, BaseSceneObject> _createdObjects = new();
         private readonly Engine.Engine _engine;
+        private readonly ISceneImpl _impl;
         private IRenderable _activeCamera;
 
         private string Name { get; }
 
-        public Scene(string name,Engine.Engine engine)
+        public Scene(string name, Engine.Engine engine, ISceneImpl impl)
         {
             Name = name;
             _engine = engine;
+            _impl = impl;
         }
 
 
@@ -55,9 +57,7 @@ namespace _3DNet.Engine.Scene
         }
 
         public void Update()
-        {
-
-        }
+        => _impl.Update(this);
 
         public ICamera CreateStandardCamera(string name)
         {
@@ -69,5 +69,6 @@ namespace _3DNet.Engine.Scene
 
         public void SetActiveScene() => _engine.SetActiveScene(this);
         internal void SetActiveCamera(IRenderable activeCamera) => _activeCamera = activeCamera;
+        internal void Init() => _impl.Initialize(this);
     }
 }

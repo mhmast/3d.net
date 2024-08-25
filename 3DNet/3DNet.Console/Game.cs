@@ -1,4 +1,6 @@
-﻿using _3DNet.Engine.Engine;
+﻿using _3DNet.Console.Scenes;
+using _3DNet.Engine.Engine;
+using _3DNet.Engine.Input;
 using _3DNet.Engine.Rendering;
 using _3DNet.Engine.Rendering.Model;
 using _3DNet.Engine.Scene;
@@ -12,39 +14,26 @@ namespace _3DNet.Console
         private readonly IRenderContextFactory _renderContextFactory;
         private readonly IEngine _engine;
         private readonly IModelFactory _modelFactory;
+        private readonly IInputFactory _inputFactory;
         private IScene _scene;
         private IRenderContext _context;
 
-        public Game(IRenderContextFactory renderContextFactory, IEngine engine,IModelFactory modelFactory)
+        public Game(IRenderContextFactory renderContextFactory, IEngine engine, IModelFactory modelFactory,IInputFactory inputFactory)
         {
             _renderContextFactory = renderContextFactory;
             _engine = engine;
             _modelFactory = modelFactory;
+            _inputFactory = inputFactory;
         }
 
 
         public void Init()
         {
-            _context = _renderContextFactory.CreateRenderContext("Main",new Size(1000, 1000),false );
+            _context = _renderContextFactory.CreateRenderContext("Main", new Size(1000, 1000), false);
             _context.RenderWindow.OnClosed += _engine.Stop;
-            _scene = _engine.GetOrCreateScene("default");
-            _scene.BackgroundColor = Color.Red;
-            _scene.SetActiveScene();
             _context.SetActiveContext();
-            var cubeModel = _modelFactory.CreateCube("cube", 10, 10, 10);
-            var cube = _scene.CreateStandardObject("cubez+", cubeModel);
-            cube.MoveTo(new Vector3(0, 0, 100));
-            cube.Resize(new Vector3(1,1,1));
-            //_scene.CreateStandardObject("cubez-", cubeModel ).MoveTo(new Vector3(0,0,-100));
-            //_scene.CreateStandardObject("cubex+", cubeModel ).MoveTo(new Vector3(100,0,0));
-            //_scene.CreateStandardObject("cubex-", cubeModel).MoveTo(new Vector3(-100, 0, 0));
-            //_scene.CreateStandardObject("cubey+", cubeModel).MoveTo(new Vector3(0, 100, 0));
-            //_scene.CreateStandardObject("cubey-", cubeModel).MoveTo(new Vector3(0, -100, 0));
-
-            var cam = _scene.CreateStandardCamera("defaultcam");
-            cam.SetActiveCamera();
-            cam.MoveTo(new Vector3(0, 0, 0));
-            cam.LookAt(cube);
+            _engine.CreateScene("default", new DefaultScene(_modelFactory,_inputFactory));
+            
         }
 
         public void Start()
