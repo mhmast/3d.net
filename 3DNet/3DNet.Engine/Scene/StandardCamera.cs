@@ -11,7 +11,11 @@ namespace _3DNet.Engine.Scene
         {
         }
 
-        protected override void OnRotationChanged() => ReCalculateviewMatrix();
+        protected override void OnRotationChanged()
+        {
+            base.OnRotationChanged();
+            ReCalculateviewMatrix();
+        }
 
         protected override void OnTranslationChanged() => ReCalculateviewMatrix();
         private void ReCalculateviewMatrix()

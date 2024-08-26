@@ -11,7 +11,7 @@ internal class DefaultScene : ISceneImpl
     private readonly IInputFactory _inputFactory;
     private ICamera _cam;
     private IMouse _mouse;
-    private float _sensitivityFactor = 0.5f;
+    private float _sensitivityFactor = 0.001f;
 
     public DefaultScene(IModelFactory modelFactory, IInputFactory inputFactory)
     {
@@ -43,7 +43,9 @@ internal class DefaultScene : ISceneImpl
     public void Update(IScene scene)
     {
         _mouse.Update();
-        _cam.Rotate(_cam.Right, _mouse.DeltaY * _sensitivityFactor);
-        _cam.Rotate(_cam.Up, 360/ _mouse.DeltaX * _sensitivityFactor);
+        var deltaY = _mouse.DeltaY * _sensitivityFactor;
+        _cam.Rotate(_cam.Right, -1);
+        //var deltaX = _mouse.DeltaX * _sensitivityFactor;
+        //_cam.Rotate(_cam.Up, deltaX);
     }
 }

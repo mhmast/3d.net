@@ -39,6 +39,8 @@ namespace _3DNet.Rendering.D3D12
 
         public Format Format => _swapChainDescription.ModeDescription.Format;
 
+        public bool FullScreen => _fullScreen;
+
         event Action IRenderWindow.OnClosed
         {
             add { _onClosedAction += value; }
@@ -124,7 +126,7 @@ namespace _3DNet.Rendering.D3D12
             _swapChainDescription = new SwapChainDescription
             {
                 BufferCount = FrameCount,
-                IsWindowed = !_fullScreen,
+                IsWindowed = !FullScreen,
                 Flags = SwapChainFlags.None,
                 SwapEffect = SwapEffect.FlipDiscard,
                 Usage = Usage.RenderTargetOutput,

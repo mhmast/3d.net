@@ -32,6 +32,9 @@ namespace _3DNet.Rendering.D3D12
         private PipelineState _lastKnownPipelineState;
         private readonly Fence _d3DFence;
 
+        public event Action MouseEnter;
+        public event Action MouseExit;
+
         public D3DRenderWindowContext(Device device, CommandAllocator commandAllocator, CommandQueue commandQueue, IEnumerable<ID3DObject> d3DObjects, D3DRenderForm d3DRenderForm, Action<IRenderContextInternal> setActive)
         {
             _d3DDevice = device;
@@ -43,6 +46,8 @@ namespace _3DNet.Rendering.D3D12
             _d3DRenderForm = d3DRenderForm;
             _setActive = setActive;
             _d3DFence = _d3DDevice.CreateFence(0, FenceFlags.None);
+            d3DRenderForm.MouseEnter += (_,__) => MouseEnter?.DynamicInvoke();
+            d3DRenderForm.MouseLeave += (_,__) => MouseExit?.DynamicInvoke();
         }
 
         public IRenderWindow RenderWindow => _d3DRenderForm;
@@ -50,6 +55,8 @@ namespace _3DNet.Rendering.D3D12
         public bool IsDisposed { get; private set; }
 
         public WvpBuffer WvpBuffer => _worldViewProjectionBuffer;
+
+        public bool FullScreen => _d3DRenderForm.FullScreen;
 
         public bool BeginScene(Color backgroundColor, long frame)
         {
@@ -87,8 +94,10 @@ namespace _3DNet.Rendering.D3D12
             _d3DRenderForm.Present();
 
             _currentFrame = frame;
-            WaitForFrameToComplete(_currentFrame);
-            Debug.WriteLine("-------END SCENE");
+            if (!IsDisposed)
+            {
+                WaitForFrameToComplete(_currentFrame);
+            }
         }
 
         private void WaitForFrameToComplete(long frame)
@@ -105,7 +114,6 @@ namespace _3DNet.Rendering.D3D12
         public void ClearRenderTargetView(IntPtr ptr, Color clearColor)
         => _commandQueue.Enqueue(c =>
         {
-            System.Diagnostics.Debug.WriteLine($"-------{nameof(ClearRenderTargetView)} {ptr}");
             c.ClearRenderTargetView(new CpuDescriptorHandle { Ptr = ptr }, new RawColor4(clearColor.R, clearColor.G, clearColor.B, clearColor.A));
         });
 
@@ -152,7 +160,6 @@ namespace _3DNet.Rendering.D3D12
         internal void ResourceBarrierTransition(Resource buffer, ResourceStates oldState, ResourceStates newState)
        => _commandQueue.Enqueue(c =>
        {
-           System.Diagnostics.Debug.WriteLine($"-------{nameof(ResourceBarrierTransition)} {buffer.NativePointer}");
            c.ResourceBarrierTransition(buffer, oldState, newState);
        });
 
@@ -186,7 +193,6 @@ namespace _3DNet.Rendering.D3D12
         internal void SetViewport(RawViewportF viewport) => _commandQueue.Enqueue(c => c.SetViewport(viewport));
         internal void SetRenderTarget(CpuDescriptorHandle renderTarget, CpuDescriptorHandle depthStencil) => _commandQueue.Enqueue(c =>
         {
-            System.Diagnostics.Debug.WriteLine($"-------{nameof(SetRenderTarget)} {renderTarget.Ptr} {depthStencil.Ptr}");
             c.SetRenderTargets(renderTarget, depthStencil);
         });
         public void SetActiveContext() => _setActive(this);

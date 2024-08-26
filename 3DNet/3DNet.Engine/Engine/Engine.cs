@@ -7,17 +7,18 @@ namespace _3DNet.Engine.Engine
 {
     internal class Engine : IEngine
     {
-        readonly IRenderEngine _renderEngine;
         private bool _running = false;
         private IRenderContextInternal _context;
         private ISceneInternal _activeScene;
-        private Dictionary<string, Scene.Scene> _scenes = new();
-        public Engine(IRenderEngine renderEngine)
-        {
-            _renderEngine = renderEngine;
-        }
+        private readonly Dictionary<string, Scene.Scene> _scenes = new();
 
-        internal void SetActiveContext(IRenderContextInternal context) => _context = context;
+        public event Action<IRenderContext> ActiveContextChanged;
+
+        internal void SetActiveContext(IRenderContextInternal context)
+        {
+            _context = context;
+            ActiveContextChanged?.DynamicInvoke(context);
+        }
 
         public void CreateScene(string name, ISceneImpl impl)
         {

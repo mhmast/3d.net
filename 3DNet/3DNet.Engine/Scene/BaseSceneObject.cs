@@ -2,6 +2,7 @@
 using _3DNet.Engine.Rendering;
 using System;
 using System.Numerics;
+using System.Diagnostics;
 
 namespace _3DNet.Engine.Scene
 {
@@ -21,7 +22,11 @@ namespace _3DNet.Engine.Scene
         }
 
         protected virtual void OnTranslationChanged() { }
-        protected virtual void OnRotationChanged() { }
+        protected virtual void OnRotationChanged()
+        {
+            var eulers = _rotationQuat.ToEulerAngles();
+            Debug.WriteLine($"pitch: {eulers.X} yaw:{eulers.Y} roll:{eulers.Z}");
+        }
 
         protected virtual void OnScaleChanged() { }
 
@@ -91,16 +96,18 @@ namespace _3DNet.Engine.Scene
         }
 
 
-        public void Rotate(Vector3 axis, float angle)
+        public void Rotate(Vector3 axis, float degrees)
         {
-            _rotationQuat += Quaternion.CreateFromAxisAngle(axis, angle);
-            _up = (new Quaternion(0, 1, 0, 0) * _rotationQuat).ToVector3().Normalize();
-            _forward = (new Quaternion(0, 0, 1, 0) * _rotationQuat).ToVector3().Normalize();
-            _right = (new Quaternion(1, 0, 0, 0) * _rotationQuat).ToVector3().Normalize();
+            var rads = degrees * (MathF.PI / 180f);
+            Debug.WriteLine($"Rotate {degrees} = rads {rads}");
+            _rotationQuat = Quaternion.Concatenate(_rotationQuat, Quaternion.CreateFromAxisAngle(axis, rads)).Normalize();
+            _up = Vector3.Transform(new Vector3(0, 1, 0), _rotationQuat);
+            _forward = Vector3.Transform(new Vector3(0, 0, 1), _rotationQuat);
+            _right = Vector3.Transform(new Vector3(1, 0, 0), _rotationQuat);
             ReCalculateWorld();
             OnRotationChanged();
         }
 
-       
+
     }
 }

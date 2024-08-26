@@ -9,6 +9,11 @@ namespace _3DNet.Engine.Rendering
         IRenderWindow RenderWindow { get; }
         bool IsDisposed { get; }
         WvpBuffer WvpBuffer{ get; }
+        bool FullScreen { get; }
+
+        event Action MouseEnter;
+        event Action MouseExit;
+
         void SetWorld(Matrix4x4 world);
         void SetView(Matrix4x4 view);
         void SetProjection(Matrix4x4 projection);
