@@ -54,6 +54,12 @@ namespace _3DNet.Rendering.D3D12
             _engine = engine;
             _fullScreen = fullScreen;
             ReCreateSwapchainDescription();
+            Cursor.Hide();
+        }
+        protected override void OnShown(EventArgs e)
+        {
+            base.OnShown(e);
+            OnGotFocus(e);
         }
 
         private void CreateSwapchainResources()

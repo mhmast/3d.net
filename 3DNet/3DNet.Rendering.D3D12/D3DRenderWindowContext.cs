@@ -32,8 +32,8 @@ namespace _3DNet.Rendering.D3D12
         private PipelineState _lastKnownPipelineState;
         private readonly Fence _d3DFence;
 
-        public event Action MouseEnter;
-        public event Action MouseExit;
+        public event Action Focus;
+        public event Action FocusLost;
 
         public D3DRenderWindowContext(Device device, CommandAllocator commandAllocator, CommandQueue commandQueue, IEnumerable<ID3DObject> d3DObjects, D3DRenderForm d3DRenderForm, Action<IRenderContextInternal> setActive)
         {
@@ -46,8 +46,8 @@ namespace _3DNet.Rendering.D3D12
             _d3DRenderForm = d3DRenderForm;
             _setActive = setActive;
             _d3DFence = _d3DDevice.CreateFence(0, FenceFlags.None);
-            d3DRenderForm.MouseEnter += (_,__) => MouseEnter?.DynamicInvoke();
-            d3DRenderForm.MouseLeave += (_,__) => MouseExit?.DynamicInvoke();
+            d3DRenderForm.GotFocus += (_,__) => Focus?.DynamicInvoke();
+            d3DRenderForm.LostFocus += (_,__) => FocusLost?.DynamicInvoke();
         }
 
         public IRenderWindow RenderWindow => _d3DRenderForm;

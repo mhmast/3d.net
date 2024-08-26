@@ -1,6 +1,7 @@
 ﻿using _3DNet.Engine.Input;
 using _3DNet.Engine.Rendering.Model;
 using _3DNet.Engine.Scene;
+using System.Diagnostics;
 using System.Drawing;
 using System.Numerics;
 
@@ -11,7 +12,7 @@ internal class DefaultScene : ISceneImpl
     private readonly IInputFactory _inputFactory;
     private ICamera _cam;
     private IMouse _mouse;
-    private float _sensitivityFactor = 0.001f;
+    private const float SensitivityFactor = 0.01f;
 
     public DefaultScene(IModelFactory modelFactory, IInputFactory inputFactory)
     {
@@ -43,9 +44,9 @@ internal class DefaultScene : ISceneImpl
     public void Update(IScene scene)
     {
         _mouse.Update();
-        var deltaY = _mouse.DeltaY * _sensitivityFactor;
-        _cam.Rotate(_cam.Right, -1);
-        //var deltaX = _mouse.DeltaX * _sensitivityFactor;
-        //_cam.Rotate(_cam.Up, deltaX);
+        var deltaY = _mouse.DeltaY * SensitivityFactor;
+        _cam.Rotate(_cam.Right,deltaY);
+        var deltaX = _mouse.DeltaX * SensitivityFactor * -1;
+        _cam.Rotate(_cam.Up, deltaX);
     }
 }

@@ -11,8 +11,8 @@ namespace _3DNet.Engine.Rendering
         WvpBuffer WvpBuffer{ get; }
         bool FullScreen { get; }
 
-        event Action MouseEnter;
-        event Action MouseExit;
+        event Action Focus;
+        event Action FocusLost;
 
         void SetWorld(Matrix4x4 world);
         void SetView(Matrix4x4 view);

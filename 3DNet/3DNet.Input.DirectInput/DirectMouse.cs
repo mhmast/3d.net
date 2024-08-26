@@ -1,6 +1,7 @@
 ﻿using _3DNet.Engine.Engine;
 using _3DNet.Engine.Input;
 using _3DNet.Engine.Rendering;
+using System.Diagnostics;
 using DirectInputDevice = SharpDX.DirectInput.DirectInput;
 using Mouse = SharpDX.DirectInput.Mouse;
 
@@ -12,7 +13,7 @@ internal class DirectMouse : IMouse
     private int _lastY = 0;
     private int _lastZ = 0;
     private SharpDX.DirectInput.MouseState _state;
-    private IRenderContext _context;
+    private IRenderContext? _context;
     private bool _captureMouse = true;
 
     public DirectMouse(IEngine engine)
@@ -27,13 +28,13 @@ internal class DirectMouse : IMouse
         {
             if (_context != null)
             {
-                _context.MouseEnter -= ContextMouseEnter;
-                _context.MouseExit -= ContextMouseExit;
+                _context.Focus -= ContextFocused;
+                _context.FocusLost -= ContextFocusLost;
             }
             _context = context;
             _captureMouse = context.FullScreen;
-            _context.MouseEnter += ContextMouseEnter;
-            _context.MouseExit += ContextMouseExit;
+            _context.Focus += ContextFocused;
+            _context.FocusLost += ContextFocusLost;
         };
         _mouse = new Mouse(device);
         _mouse.Acquire();
@@ -41,19 +42,19 @@ internal class DirectMouse : IMouse
         _state = _mouse.GetCurrentState();
     }
 
-    private void ContextMouseExit() => _captureMouse = false;
-    private void ContextMouseEnter() => _captureMouse = true;
+    private void ContextFocusLost() => _captureMouse = false;
+    private void ContextFocused() => _captureMouse = true;
 
     public int X => _state.X;
 
     public int Y => _state.Y;
     public int Z => _state.Z;
 
-    public float DeltaX => X - _lastX;
+    public float DeltaX => _state.X;
 
-    public float DeltaY => Y - _lastY;
+    public float DeltaY => _state.Y;
 
-    public float DeltaZ => Z - _lastZ;
+    public float DeltaZ => _state.Z;
 
     public bool IsLeftButtonDown => _state.Buttons[0];
 
@@ -64,9 +65,6 @@ internal class DirectMouse : IMouse
     public void Update()
     {
         if (!_captureMouse) return;
-        _lastX = X;
-        _lastY = Y;
-        _lastZ = Z;
         _mouse.Poll();
         _state = _mouse.GetCurrentState();
     }
