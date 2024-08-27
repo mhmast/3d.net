@@ -73,7 +73,9 @@ namespace _3DNet.Rendering.D3D12.Shaders
                 SampleMask = int.MaxValue,
                 PrimitiveTopologyType = PrimitiveTopologyType.Triangle,
                 RenderTargetCount = _d3DRenderEngine.NoOfCreatedTargets,
-                Flags = PipelineStateFlags.ToolDebug,
+#if DEBUG
+//                Flags = PipelineStateFlags.ToolDebug,
+#endif
                 SampleDescription = new SampleDescription(1, 0),
                 StreamOutput = new StreamOutputDescription()
             };
@@ -101,12 +103,12 @@ namespace _3DNet.Rendering.D3D12.Shaders
 
         private static SharpDX.Direct3D12.ShaderBytecode LoadShaderByteCode(string shaderFile, string method, string profile)
         {
-            return new SharpDX.Direct3D12.ShaderBytecode(SharpDX.D3DCompiler.ShaderBytecode.CompileFromFile(shaderFile, method, profile
+            return new SharpDX.Direct3D12.ShaderBytecode(SharpDX.D3DCompiler.ShaderBytecode.CompileFromFile(shaderFile, method, profile,
 #if DEBUG
-                , ShaderFlags.WarningsAreErrors | ShaderFlags.Debug | ShaderFlags.SkipOptimization | ShaderFlags.DebugNameForSource
+           //      ShaderFlags.WarningsAreErrors | ShaderFlags.Debug | ShaderFlags.SkipOptimization | ShaderFlags.DebugNameForSource |
 
 #endif
-                | ShaderFlags.PackMatrixRowMajor
+                 ShaderFlags.PackMatrixRowMajor
                           ));
 
         }

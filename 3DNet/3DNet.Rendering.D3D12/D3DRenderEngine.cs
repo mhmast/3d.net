@@ -21,7 +21,7 @@ namespace _3DNet.Rendering.D3D12
     internal class D3DRenderEngine : IRenderEngine, IShaderFactory, ID3DObject
     {
 #if DEBUG
-        private readonly DriverType _driverType = DriverType.Warp;
+        private readonly DriverType _driverType = DriverType.Hardware;
         private SharpDX.Direct3D12.InfoQueue _infoQueue;
 #else
         private readonly DriverType _driverType = DriverType.Hardware;

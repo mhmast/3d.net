@@ -25,9 +25,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Update="RenderTargets\D3DRenderForm.cs">
-      <SubType>Form</SubType>
-    </Compile>
+    <Compile Update="RenderTargets\D3DRenderForm.cs" />
   </ItemGroup>
 
   <ItemGroup>

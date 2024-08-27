@@ -6,7 +6,9 @@ using SharpDX.Mathematics.Interop;
 using System;
 using System.ComponentModel;
 using System.Drawing;
+using System.Globalization;
 using System.Numerics;
+using System.Runtime.InteropServices;
 using System.Windows.Forms;
 
 namespace _3DNet.Rendering.D3D12
@@ -34,6 +36,7 @@ namespace _3DNet.Rendering.D3D12
         private RawRectangle _scissorRect;
         private int _renderViewIncrementSize;
         private int _frameIndex;
+        private bool _isControlAlive;
 
         public Matrix4x4 Projection { get; private set; }
 
@@ -224,9 +227,40 @@ namespace _3DNet.Rendering.D3D12
         public void Present()
         {
             _swapChain.Present(1, PresentFlags.None);
-            Application.DoEvents();
+            ProcessWindowMessages();
         }
 
+        private void ProcessWindowMessages()
+        {
+            if (!_isControlAlive)
+            {
+                return;
+            }
+            while (Win32Native.PeekMessage(out var lpMsg, IntPtr.Zero, 0, 0, 0) != 0)
+            {
+                if (Win32Native.GetMessage(out lpMsg, IntPtr.Zero, 0, 0) == -1)
+                {
+                    throw new InvalidOperationException(string.Format(CultureInfo.InvariantCulture, "An error happened in rendering loop while processing windows messages. Error: {0}", new object[1] { Marshal.GetLastWin32Error() }));
+                }
+
+                if (lpMsg.msg == 130)
+                {
+                    _isControlAlive = false;
+                }
+                
+                var message = default(System.Windows.Forms.Message);
+                message.HWnd = lpMsg.handle;
+                message.LParam = lpMsg.lParam;
+                message.Msg = (int)lpMsg.msg;
+                message.WParam = lpMsg.wParam;
+                var message2 = message;
+                if (!Application.FilterMessage(ref message2))
+                {
+                    Win32Native.TranslateMessage(ref lpMsg);
+                    Win32Native.DispatchMessage(ref lpMsg);
+                }
+            }
+        }
 
         public void Begin(D3DRenderWindowContext context)
         {

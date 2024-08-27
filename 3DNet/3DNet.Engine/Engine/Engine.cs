@@ -53,6 +53,7 @@ namespace _3DNet.Engine.Engine
                     _activeScene.Render(_context, frame);
                 }
                 frame++;
+                GC.Collect();
             } 
         }
 
