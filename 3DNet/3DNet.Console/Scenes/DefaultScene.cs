@@ -28,8 +28,10 @@ internal class DefaultScene : ISceneImpl
         scene.SetActiveScene();
         ;
         var cubeModel = _modelFactory.CreateCube("cube", 10, 10, 10);
+        var planeModel = _modelFactory.CreatePlane("plane", 1000, 1000);
         var cube = scene.CreateStandardObject("cubez+", cubeModel).MoveTo(new Vector3(0, 0, 100)).Resize(new Vector3(1, 1, 1));
         scene.CreateStandardObject("cubez-", cubeModel).MoveTo(new Vector3(0, 0, -100)).Resize(new Vector3(1, 1, 1));
+        scene.CreateStandardObject("Plane", planeModel).MoveTo(new Vector3(0, 0, 0));
         //scene.CreateStandardObject("cubex+", cubeModel).MoveTo(new Vector3(100, 0, 0)).Resize(new Vector3(1, 1, 1));
         //scene.CreateStandardObject("cubex-", cubeModel).MoveTo(new Vector3(-100, 0, 0)).Resize(new Vector3(1, 1, 1));
         //scene.CreateStandardObject("cubey+", cubeModel).MoveTo(new Vector3(0, 100, 0)).Resize(new Vector3(1, 1, 1));

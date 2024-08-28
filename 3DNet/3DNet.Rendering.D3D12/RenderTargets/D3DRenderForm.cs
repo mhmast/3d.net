@@ -45,7 +45,7 @@ namespace _3DNet.Rendering.D3D12
 
         public bool FullScreen
         {
-            get => _swapChain?.IsFullScreen ?? false;
+            get => !IsDisposed && (_swapChain?.IsFullScreen ?? false);
             set
             {
                 if (FullScreen == value) return;
@@ -237,7 +237,7 @@ namespace _3DNet.Rendering.D3D12
             {
                 ResizeSwapchainResources();
             }
-            
+
             _isResizingSwapChain = false;
         }
 
@@ -246,7 +246,7 @@ namespace _3DNet.Rendering.D3D12
             //var dbg = _swapChain.GetDevice<SharpDX.Direct3D12.Device>().QueryInterface<DebugDevice>();
             //dbg.ReportLiveDeviceObjects(ReportingLevel.Detail);
             DisposeSwapchainAndBackBuffers();
-            
+
             _swapChain = _engine.ReCreateSwapChain(_swapChainDescription);
             ReCreateBuffers();
         }

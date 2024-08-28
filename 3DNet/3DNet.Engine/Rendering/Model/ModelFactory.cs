@@ -50,7 +50,30 @@ namespace _3DNet.Engine.Rendering.Model
                 (-width/2,height/2,-depth/2) , (width/2,height/2,-depth/2),(-width/2,-height/2,-depth/2) , (width/2,-height/2,-depth/2),
                 (-width/2,height/2,depth/2) , (width/2,height/2,depth/2),(-width/2,-height/2,depth/2) , (width/2,-height/2,depth/2)
             };
+        
+        
+        protected IEnumerable<PositionOnlyVertex> CreatePlaneVertices(float width, float height)
+        => new PositionOnlyVertex[]
+            {
+                /*Front
+                 *        
+                 *   0------------1     
+                 *   |            |     
+                 *   |            |
+                 *   2------------3
+                 
+                 */
+                
+                (-width/2,height/2,0) , (width/2,height/2,0),(-width/2,-height/2,0) , (width/2,-height/2,0)
+            };
 
+        protected uint[] CreatePlaneIndices()
+        => new uint[]
+            {
+                //front
+                0,1,3,0,3,2
+            };
+        
         protected uint[] CreateCubeIndices()
         => new uint[]
             {
@@ -75,5 +98,11 @@ namespace _3DNet.Engine.Rendering.Model
               new Vector3(width, height, depth));
         protected abstract IBuffer CreateIndexBuffer(string name, uint[] indices);
         protected abstract IBuffer CreateVertexBuffer<T>(string name, IEnumerable<T> vertices) where T : struct;
+        public IModel CreatePlane(string name, float width, float height)
+             => new SimpleModel(
+              CreateVertexBuffer(name, CreatePlaneVertices(width, height).ToArray()),
+              CreateIndexBuffer(name, CreatePlaneIndices()),
+              _shaderFactory.DefaultShader,
+              new Vector3(width, height, 0));
     }
 }

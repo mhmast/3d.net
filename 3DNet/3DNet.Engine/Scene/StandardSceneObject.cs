@@ -8,7 +8,7 @@ namespace _3DNet.Engine.Scene
     {
 
         private readonly IModel _model;
-        private Matrix4x4 _scale;
+        private Matrix4x4 _scale = Matrix4x4.Identity;
 
         public StandardSceneObject(Scene scene,string name, IModel model) : base(scene,name)
         {
