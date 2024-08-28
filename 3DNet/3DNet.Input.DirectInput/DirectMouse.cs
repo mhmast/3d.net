@@ -1,7 +1,7 @@
 ﻿using _3DNet.Engine.Engine;
 using _3DNet.Engine.Input;
 using _3DNet.Engine.Rendering;
-using System.Diagnostics;
+using System.Windows.Forms;
 using DirectInputDevice = SharpDX.DirectInput.DirectInput;
 using Mouse = SharpDX.DirectInput.Mouse;
 
@@ -11,7 +11,6 @@ internal class DirectMouse : IMouse
     private readonly Mouse _mouse;
     private int _lastX = 0;
     private int _lastY = 0;
-    private int _lastZ = 0;
     private SharpDX.DirectInput.MouseState _state;
     private IRenderContext? _context;
     private bool _captureMouse = true;
@@ -28,27 +27,28 @@ internal class DirectMouse : IMouse
         {
             if (_context != null)
             {
-                _context.Focus -= ContextFocused;
-                _context.FocusLost -= ContextFocusLost;
+                _context.RenderWindow.GotFocus -= RenderWindowFocused;
+                _context.RenderWindow.LostFocus -= RenderWindowFocusLost;
             }
             _context = context;
-            _captureMouse = context.FullScreen;
-            _context.Focus += ContextFocused;
-            _context.FocusLost += ContextFocusLost;
+            _captureMouse = context.RenderWindow.FullScreen;
+            _context.RenderWindow.GotFocus += RenderWindowFocused;
+            _context.RenderWindow.LostFocus += RenderWindowFocusLost;
         };
         _mouse = new Mouse(device);
         _mouse.Acquire();
         _mouse.Poll();
+        _lastX = Cursor.Position.X;
+        _lastY = Cursor.Position.Y;
         _state = _mouse.GetCurrentState();
     }
 
-    private void ContextFocusLost() => _captureMouse = false;
-    private void ContextFocused() => _captureMouse = true;
+    private void RenderWindowFocusLost() => _captureMouse = false;
+    private void RenderWindowFocused() => _captureMouse = true;
 
     public int X => _state.X;
 
     public int Y => _state.Y;
-    public int Z => _state.Z;
 
     public float DeltaX => _state.X;
 
@@ -67,5 +67,7 @@ internal class DirectMouse : IMouse
         if (!_captureMouse) return;
         _mouse.Poll();
         _state = _mouse.GetCurrentState();
+        _lastX += _state.X;
+        _lastY += _state.Y;
     }
 }

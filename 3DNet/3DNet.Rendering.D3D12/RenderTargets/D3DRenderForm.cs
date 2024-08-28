@@ -9,18 +9,18 @@ using System.Drawing;
 using System.Globalization;
 using System.Numerics;
 using System.Runtime.InteropServices;
+using System.Threading;
 using System.Windows.Forms;
 
 namespace _3DNet.Rendering.D3D12
 {
-    internal partial class D3DRenderForm : Form, IRenderWindow, ID3DRenderTarget
+    internal class D3DRenderForm : Form, IRenderWindow, ID3DRenderTarget
     {
         const int FrameCount = 2;
         private SwapChain3 _swapChain;
         private SwapChainDescription _swapChainDescription;
-
+        private ResourceDescription _depthStencilBufferDesc;
         private readonly D3DRenderEngine _engine;
-        private readonly bool _fullScreen;
         //private SharpDX.Direct3D12.Resource _backBuffer1;
         //private SharpDX.Direct3D12.Resource _backBuffer2;
         //private SharpDX.Direct3D12.Resource _activeBackBuffer;
@@ -36,13 +36,24 @@ namespace _3DNet.Rendering.D3D12
         private RawRectangle _scissorRect;
         private int _renderViewIncrementSize;
         private int _frameIndex;
-        private bool _isControlAlive;
+        private bool _isControlAlive = true;
+        private bool _isResizingSwapChain = false;
+        private Action _gotFocus;
+        private Action _lostFocus;
 
         public Matrix4x4 Projection { get; private set; }
 
         public Format Format => _swapChainDescription.ModeDescription.Format;
 
-        public bool FullScreen => _fullScreen;
+        public bool FullScreen
+        {
+            get => _swapChain?.IsFullScreen ?? false;
+            set
+            {
+                if (FullScreen == value) return;
+                ResizeSwapchain(value);
+            }
+        }
 
         event Action IRenderWindow.OnClosed
         {
@@ -50,14 +61,43 @@ namespace _3DNet.Rendering.D3D12
             remove { _onClosedAction -= value; }
         }
 
-        public D3DRenderForm(D3DRenderEngine engine, string name, bool fullScreen)
+        event Action IRenderWindow.GotFocus
+        {
+            add
+            {
+                _gotFocus += value;
+            }
+
+            remove
+            {
+                _gotFocus -= value;
+            }
+        }
+
+        event Action IRenderWindow.LostFocus
+        {
+            add
+            {
+                _lostFocus += value;
+            }
+
+            remove
+            {
+                _lostFocus -= value;
+            }
+        }
+
+        public D3DRenderForm(D3DRenderEngine engine, string name)
         {
             //InitializeComponent();
             Name = name;
+            TopMost = false;
+            FormBorderStyle = FormBorderStyle.FixedSingle;
             _engine = engine;
-            _fullScreen = fullScreen;
-            ReCreateSwapchainDescription();
+            ReCreateSwapchainDescription(false);
             Cursor.Hide();
+            GotFocus += (_, __) => _gotFocus?.DynamicInvoke();
+            LostFocus += (_, __) => _lostFocus?.DynamicInvoke();
         }
         protected override void OnShown(EventArgs e)
         {
@@ -67,6 +107,8 @@ namespace _3DNet.Rendering.D3D12
 
         private void CreateSwapchainResources()
         {
+
+            //Win32Native.SetWindowLong(Handle, Win32Native.WindowLongType.Style, (IntPtr)WindowStyles.WS_BORDER);
             _swapChain = _engine.CreateSwapChain(_swapChainDescription);
             _swapChain.DebugName = $"swapchain_{Name}";
             // Create descriptor heaps.
@@ -107,35 +149,20 @@ namespace _3DNet.Rendering.D3D12
             _renderView = _renderTargetViewHeap.CPUDescriptorHandleForHeapStart;
             _depthStencilView = _depthStencilViewHeap.CPUDescriptorHandleForHeapStart;
 
-            var backBuffer1 = _swapChain.GetBackBuffer<SharpDX.Direct3D12.Resource>(0);
-            backBuffer1.Name = $"bb1_{Name}";
-            _backBuffers[0] = backBuffer1;
             _renderViewIncrementSize = _engine.GetRenderTargetDescriptorHandleIncrementSize();
-            _engine.CreateRenderTargetView(backBuffer1, null, _renderView);
-            var backBuffer2 = _swapChain.GetBackBuffer<SharpDX.Direct3D12.Resource>(1);
-            backBuffer2.Name = $"bb2_{Name}";
-            _backBuffers[1] = backBuffer2;
-            _engine.CreateRenderTargetView(backBuffer2, null, _renderView + _renderViewIncrementSize);
-
-            var depthStencilBufferDesc = ResourceDescription.Texture2D(Format.D32_Float, ClientSize.Width, ClientSize.Height, flags: ResourceFlags.AllowDepthStencil);
-            ClearValue? clearValue = new()
-            {
-                Color = new RawVector4(0, 0, 0, 0),
-                DepthStencil = new DepthStencilValue { Depth = 1, Stencil = 5 },
-                Format = Format.D32_Float
-            };
-            _depthStencilBuffer = _engine.CreateCommittedResource(new HeapProperties(HeapType.Default), HeapFlags.None, depthStencilBufferDesc, ResourceStates.DepthWrite, clearValue);
-            _depthStencilBuffer.Name = $"dsb_{Name}";
-            _engine.CreateDepthStencilView(_depthStencilBuffer, null, _depthStencilView);
             ReCreateBuffers();
+
         }
 
-        private void ReCreateSwapchainDescription()
+        private void ReCreateSwapchainDescription(bool fullScreen)
         {
+            var screen = Screen.FromControl(this);
+            var width = fullScreen ? screen.Bounds.Width : ClientSize.Width;
+            var height = fullScreen ? screen.Bounds.Height : ClientSize.Height;
             _swapChainDescription = new SwapChainDescription
             {
                 BufferCount = FrameCount,
-                IsWindowed = !FullScreen,
+                IsWindowed = !fullScreen,
                 Flags = SwapChainFlags.None,
                 SwapEffect = SwapEffect.FlipDiscard,
                 Usage = Usage.RenderTargetOutput,
@@ -143,12 +170,16 @@ namespace _3DNet.Rendering.D3D12
                 OutputHandle = Handle,
                 ModeDescription = new ModeDescription
                 {
-                    Height = ClientSize.Height,
-                    Width = ClientSize.Width,
+                    Height = height,
+                    Width = width,
                     Format = Format.R8G8B8A8_UNorm,
                     RefreshRate = new Rational(60, 1)
                 }
             };
+            _depthStencilBufferDesc = ResourceDescription.Texture2D(Format.D32_Float, width, height, flags: ResourceFlags.AllowDepthStencil);
+            _viewport = new RawViewportF { X = 0, Y = 0, Width = width, Height = height, MinDepth = 0, MaxDepth = 200 };
+            _scissorRect = new RawRectangle { Left = 0, Top = 0, Right = width, Bottom = height };
+            Projection = Matrix4x4.CreatePerspectiveFieldOfView((float)System.Math.PI / 4f, width / height, 1, 500);
         }
 
 
@@ -163,11 +194,11 @@ namespace _3DNet.Rendering.D3D12
 
             if (disposing)
             {
-                components?.Dispose();
+                DisposeBackBuffers();
                 _depthStencilBuffer?.Dispose();
                 _depthStencilViewHeap?.Dispose();
-                _swapChain?.Dispose();
                 _renderTargetViewHeap?.Dispose();
+                _swapChain?.Dispose();
             }
             base.Dispose(disposing);
 
@@ -182,12 +213,25 @@ namespace _3DNet.Rendering.D3D12
 
         protected override void OnClientSizeChanged(EventArgs e)
         {
+            if (_isResizingSwapChain)
+            {
+                return;
+            }
+            ResizeSwapchain(FullScreen);
+        }
+
+        private void ResizeSwapchain(bool fullScreen)
+        {
             if (!IsHandleCreated)
             {
                 return;
             }
-
-            ReCreateSwapchainDescription();
+            if (_isResizingSwapChain)
+            {
+                return;
+            }
+            _isResizingSwapChain = true;
+            ReCreateSwapchainDescription(fullScreen);
             if (_swapChain == null)
             {
                 CreateSwapchainResources();
@@ -196,15 +240,31 @@ namespace _3DNet.Rendering.D3D12
             {
                 ResizeSwapchainResources();
             }
-            Projection = Matrix4x4.CreatePerspectiveFieldOfView((float)System.Math.PI / 4f, Width / Height, 1, 500); ;
+            
+            _isResizingSwapChain = false;
         }
 
         private void ResizeSwapchainResources()
         {
             //var dbg = _swapChain.GetDevice<SharpDX.Direct3D12.Device>().QueryInterface<DebugDevice>();
             //dbg.ReportLiveDeviceObjects(ReportingLevel.Detail);
-            _swapChain.ResizeTarget(ref _swapChainDescription.ModeDescription);
+            DisposeBackBuffers();
+            if (FullScreen)
+            {
+                _swapChain.SetFullscreenState(false, null);
+            }
+            _swapChain.Dispose();
+            _swapChain = _engine.ReCreateSwapChain(_swapChainDescription);
             ReCreateBuffers();
+        }
+
+        private void DisposeBackBuffers()
+        {
+            for (var i = 0; i < FrameCount; i++)
+            {
+                _backBuffers[i]?.Dispose();
+            }
+            _depthStencilBuffer.Dispose();
         }
 
         private void ReCreateBuffers()
@@ -219,9 +279,24 @@ namespace _3DNet.Rendering.D3D12
             //_buffer1Reset = true;
             //_buffer2Reset = true;
 
+            for (var i = 0; i < FrameCount; i++)
+            {
+                var backBuffer = _swapChain.GetBackBuffer<SharpDX.Direct3D12.Resource>(i);
+                backBuffer.Name = $"bb{i}_{Name}";
+                _backBuffers[i] = backBuffer;
+                _engine.CreateRenderTargetView(backBuffer, null, _renderView + (i * _renderViewIncrementSize));
+            }
 
-            _viewport = new RawViewportF { X = 0, Y = 0, Width = Width, Height = Height, MinDepth = 0, MaxDepth = 200 };
-            _scissorRect = new RawRectangle { Left = 0, Top = 0, Right = Width, Bottom = Height };
+            var clearValue = new ClearValue()
+            {
+                Color = new RawVector4(0, 0, 0, 0),
+                DepthStencil = new DepthStencilValue { Depth = 1, Stencil = 5 },
+                Format = Format.D32_Float
+            };
+            _depthStencilBuffer = _engine.CreateCommittedResource(new HeapProperties(HeapType.Default), HeapFlags.None, _depthStencilBufferDesc, ResourceStates.DepthWrite, clearValue);
+            _depthStencilBuffer.Name = $"dsb_{Name}";
+            _engine.CreateDepthStencilView(_depthStencilBuffer, null, _depthStencilView);
+
         }
 
         public void Present()
@@ -236,9 +311,9 @@ namespace _3DNet.Rendering.D3D12
             {
                 return;
             }
-            while (Win32Native.PeekMessage(out var lpMsg, IntPtr.Zero, 0, 0, 0) != 0)
+            while (Win32Native.PeekMessage(out var lpMsg, Handle, 0, 0, 0) != 0)
             {
-                if (Win32Native.GetMessage(out lpMsg, IntPtr.Zero, 0, 0) == -1)
+                if (Win32Native.GetMessage(out lpMsg, Handle, 0, 0) == -1)
                 {
                     throw new InvalidOperationException(string.Format(CultureInfo.InvariantCulture, "An error happened in rendering loop while processing windows messages. Error: {0}", new object[1] { Marshal.GetLastWin32Error() }));
                 }
@@ -247,7 +322,7 @@ namespace _3DNet.Rendering.D3D12
                 {
                     _isControlAlive = false;
                 }
-                
+
                 var message = default(System.Windows.Forms.Message);
                 message.HWnd = lpMsg.handle;
                 message.LParam = lpMsg.lParam;
@@ -265,7 +340,7 @@ namespace _3DNet.Rendering.D3D12
         public void Begin(D3DRenderWindowContext context)
         {
             _frameIndex = _swapChain.CurrentBackBufferIndex;
-         
+
             context.SetViewport(_viewport);
             context.SetScissorRect(_scissorRect);
             context.ResourceBarrierTransition(_backBuffers[_frameIndex], ResourceStates.Present, ResourceStates.RenderTarget);

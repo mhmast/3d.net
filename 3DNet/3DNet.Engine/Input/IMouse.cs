@@ -5,7 +5,6 @@ public interface IMouse
     void Update();
     int X { get; }
     int Y { get; }
-    int Z { get; }
     float DeltaX { get; }
     float DeltaY { get; }
     float DeltaZ { get; }

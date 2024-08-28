@@ -2,4 +2,6 @@
 
 public interface IKeyBoard
 {
+    void Update();
+    bool IsButtonPressed(Key key);
 }

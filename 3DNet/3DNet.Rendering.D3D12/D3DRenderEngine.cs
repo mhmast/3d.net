@@ -15,10 +15,11 @@ using _3DNet.Engine.Rendering.Shader;
 using System.IO;
 using System.Diagnostics;
 using WvpBuffer = _3DNet.Engine.Rendering.Buffer.WvpBuffer;
+using System.Threading;
 
 namespace _3DNet.Rendering.D3D12
 {
-    internal class D3DRenderEngine : IRenderEngine, IShaderFactory, ID3DObject
+    internal class D3DRenderEngine : IRenderEngine, IShaderFactory
     {
 #if DEBUG
         private readonly DriverType _driverType = DriverType.Hardware;
@@ -29,6 +30,11 @@ namespace _3DNet.Rendering.D3D12
         private Device _device;
         private CommandQueue _commandQueue;
         private CommandAllocator _commandAllocator;
+        private GraphicsCommandList _commandList;
+        private Fence _fence;
+        private long _currentFrame;
+        private bool _isDisposed;
+        private readonly EventWaitHandle _renderHandle = new(false, EventResetMode.AutoReset);
         private readonly IDictionary<string, ID3DRenderTarget> _activeTargets = new Dictionary<string, ID3DRenderTarget>();
         private readonly string _basePath = new FileInfo(typeof(D3DRenderEngine).Assembly.Location).DirectoryName;
         private readonly IDictionary<string, HlslShader> _shaders = new Dictionary<string, HlslShader>();
@@ -61,7 +67,7 @@ namespace _3DNet.Rendering.D3D12
             {
                 throw new ArgumentException($"There is already a rendertarget with the name {name}");
             }
-            var form = new D3DRenderForm(this, name, fullScreen) { Size = size };
+            var form = new D3DRenderForm(this, name) { Size = size, FullScreen = fullScreen };
             _activeTargets.Add(name, form);
             form.FormClosed += (_, __) =>
             {
@@ -78,11 +84,17 @@ namespace _3DNet.Rendering.D3D12
         {
             using var factory = new Factory4();
             var tempSwapChain = new SwapChain(factory, _commandQueue, swapChainDescription);
-            var swapChain = tempSwapChain.QueryInterface<SwapChain3>(); ;
+            var swapChain = tempSwapChain.QueryInterface<SwapChain3>();
             tempSwapChain.Dispose();
             return swapChain;
         }
 
+        internal SwapChain3 ReCreateSwapChain(SwapChainDescription swapChainDescription)
+        {
+            _commandQueue.Dispose();
+            _commandQueue = _device.CreateCommandQueue(CommandListType.Direct);
+            return CreateSwapChain(swapChainDescription);
+        }
 
         private HlslShader LoadShader(string name, ShaderDescription description)
         {
@@ -127,11 +139,13 @@ namespace _3DNet.Rendering.D3D12
 
             _commandQueue = _device.CreateCommandQueue(new CommandQueueDescription(CommandListType.Direct));
             _commandAllocator = _device.CreateCommandAllocator(CommandListType.Direct);
+            _commandList = _device.CreateCommandList(CommandListType.Direct, _commandAllocator, null);
+            _commandList.Close();
+            _fence = _device.CreateFence(0, FenceFlags.None);
             var bufferAdapter = _shaderBufferDataConverterBuilder.AddConverter<WvpBuffer, NativeWvpBuffer>(m => (NativeWvpBuffer)m).Build();
             var buffers = new[] { ShaderBufferDescription.Create<NativeWvpBuffer>("globals", 0, BufferType.GPUInput, BufferUsage.VertexShader, bufferAdapter) };
             var defaultShaderDescription = new ShaderDescription(Path.Combine(_basePath, "Shaders", "default.hlsl"), "vs_5_0", "VSMain", "ps_5_0", "PSMain", buffers, "globals");
             DefaultShader = LoadShader("Default", defaultShaderDescription);
-            RegisterD3DObject(this);
         }
 
 #if DEBUG
@@ -178,17 +192,73 @@ namespace _3DNet.Rendering.D3D12
         internal void CreateDepthStencilView(SharpDX.Direct3D12.Resource depthStencilBuffer, DepthStencilViewDescription? descRef, CpuDescriptorHandle depthStencilView) => _device.CreateDepthStencilView(depthStencilBuffer, descRef, depthStencilView);
 
         public IRenderContext CreateRenderContext(string name, Size size, bool fullScreen, Action<IRenderContextInternal> setActive)
-        => new D3DRenderWindowContext(_device, _commandAllocator, _commandQueue, _d3DObjects, CreateWindow(size, name, fullScreen), setActive);
-        public void Begin(D3DRenderWindowContext context)
+        => new D3DRenderWindowContext(_d3DObjects, CreateWindow(size, name, fullScreen), setActive, this);
+
+        internal void ExecuteCommandsForFrame(Queue<Action<GraphicsCommandList>> actions, IRenderTarget renderTarget, long frame)
         {
+
+            _commandAllocator.Reset();
+            _commandList.Reset(_commandAllocator, null);
+
+            while (actions.Count > 0)
+            {
+                actions.Dequeue()(_commandList);
+            }
+            _commandList.Close();
+            _commandQueue.ExecuteCommandList(_commandList);
+            renderTarget.Present();
+
+            _currentFrame = frame;
+            if (!_isDisposed)
+            {
+                WaitForFrameToComplete(_currentFrame);
+            }
         }
-        public void End(D3DRenderWindowContext context)
+        private void WaitForFrameToComplete(long frame)
         {
-#if DEBUG
-            //FlushInfoBuffer();
-#endif
+            _commandQueue.Signal(_fence, frame);
+            if (_fence.CompletedValue < frame)
+            {
+                _fence.SetEventOnCompletion(frame, _renderHandle.SafeWaitHandle.DangerousGetHandle());
+                _renderHandle.WaitOne();
+            }
         }
 
         internal int GetRenderTargetDescriptorHandleIncrementSize() => _device.GetDescriptorHandleIncrementSize(DescriptorHeapType.RenderTargetView);
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!_isDisposed)
+            {
+                if (disposing)
+                {
+                    WaitForFrameToComplete(_currentFrame);
+
+                    _commandAllocator.Dispose();
+                    _commandList.Dispose();
+                    _commandQueue.Dispose();
+                    _fence.Dispose();
+                    _device.Dispose();
+                }
+
+                // TODO: free unmanaged resources (unmanaged objects) and override finalizer
+                // TODO: set large fields to null
+                _isDisposed = true;
+            }
+        }
+
+        // // TODO: override finalizer only if 'Dispose(bool disposing)' has code to free unmanaged resources
+        // ~D3DRenderEngine()
+        // {
+        //     // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+        //     Dispose(disposing: false);
+        // }
+
+        public void Dispose()
+        {
+            // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+            Dispose(disposing: true);
+            GC.SuppressFinalize(this);
+        }
     }
 }

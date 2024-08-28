@@ -47,6 +47,10 @@ namespace _3DNet.Engine.Engine
             while (_running)
             {
                 _activeScene.Update();
+                if(!_running)
+                {
+                    return;
+                }
                 if (!_context.IsDisposed)
                 {
                     _context.SetProjection(_context.RenderWindow.Projection);

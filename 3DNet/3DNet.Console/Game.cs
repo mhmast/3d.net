@@ -15,7 +15,6 @@ namespace _3DNet.Console
         private readonly IEngine _engine;
         private readonly IModelFactory _modelFactory;
         private readonly IInputFactory _inputFactory;
-        private IScene _scene;
         private IRenderContext _context;
 
         public Game(IRenderContextFactory renderContextFactory, IEngine engine, IModelFactory modelFactory,IInputFactory inputFactory)
@@ -29,11 +28,15 @@ namespace _3DNet.Console
 
         public void Init()
         {
-            _context = _renderContextFactory.CreateRenderContext("Main", new Size(1000, 1000), false);
+            _context = _renderContextFactory.CreateRenderContext("Windowed", new Size(1000, 1000), false);
             _context.RenderWindow.OnClosed += _engine.Stop;
             _context.SetActiveContext();
-            _engine.CreateScene("default", new DefaultScene(_modelFactory,_inputFactory));
-            
+            _engine.CreateScene("default", new DefaultScene(_modelFactory,_inputFactory,this));
+        }
+
+        public void ToggleFullScreen()
+        {
+            _context.RenderWindow.FullScreen = !_context.RenderWindow.FullScreen;
         }
 
         public void Start()
