@@ -2,11 +2,11 @@
 using _3DNet.Engine.Rendering;
 using System;
 using System.Numerics;
-using System.Diagnostics;
 
 namespace _3DNet.Engine.Scene
 {
-    internal abstract class BaseSceneObject : ISceneObject, IRenderable
+    internal abstract class BaseSceneObject<T> : ISceneObject<T>, IRenderable
+        where T : ISceneObject<T>
     {
         private Vector3 _position = new Vector3(0, 0, 0);
         private Vector3 _forward = new Vector3(0, 0, 1);
@@ -31,6 +31,8 @@ namespace _3DNet.Engine.Scene
         protected virtual void OnScaleChanged() { }
 
         protected virtual void OnWorldRecalculated() { }
+
+        protected abstract T Instance { get; }
 
         public IScene Scene => SceneInternal;
         internal protected Scene SceneInternal { get; }
@@ -72,33 +74,36 @@ namespace _3DNet.Engine.Scene
 
         public abstract void Render(IRenderContextInternal context);
 
-        public void MoveForward(Vector3 relativeAmount)
+        public T MoveForward(Vector3 relativeAmount)
         {
             _position += relativeAmount;
             ReCalculateWorld();
             OnTranslationChanged();
+            return Instance;
         }
 
-        public void MoveTo(Vector3 position)
+        public T MoveTo(Vector3 position)
         {
             _position = position;
             ReCalculateWorld();
             OnTranslationChanged();
+            return Instance;
         }
 
-        public void LookAt(ISceneObject obj)
+        public T LookAt(ISceneObject obj)
         {
             _forward = (Position - obj.Position).Normalize();
             _right = _up.Cross(_forward).Normalize();
             _up = _forward.Cross(_right);
             ReCalculateWorld();
             OnRotationChanged();
+            return Instance;
         }
 
 
-        public void Rotate(Vector3 axis, float degrees)
+        public T Rotate(Vector3 axis, float degrees)
         {
-            if (degrees == 0) return;
+            if (degrees == 0) return Instance;
             var rads = degrees * (MathF.PI / 180f);
             _rotationQuat = Quaternion.Concatenate(_rotationQuat, Quaternion.CreateFromAxisAngle(axis, rads)).Normalize();
             _up = Vector3.Transform(new Vector3(0, 1, 0), _rotationQuat);
@@ -106,6 +111,7 @@ namespace _3DNet.Engine.Scene
             _right = Vector3.Transform(new Vector3(1, 0, 0), _rotationQuat);
             ReCalculateWorld();
             OnRotationChanged();
+            return Instance;
         }
 
 

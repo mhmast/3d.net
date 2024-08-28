@@ -28,19 +28,14 @@ internal class DefaultScene : ISceneImpl
         scene.SetActiveScene();
         ;
         var cubeModel = _modelFactory.CreateCube("cube", 10, 10, 10);
-        var cube = scene.CreateStandardObject("cubez+", cubeModel);
-        cube.MoveTo(new Vector3(0, 0, 100));
-        cube.Resize(new Vector3(1, 1, 1));
-        //_scene.CreateStandardObject("cubez-", cubeModel ).MoveTo(new Vector3(0,0,-100));
-        //_scene.CreateStandardObject("cubex+", cubeModel ).MoveTo(new Vector3(100,0,0));
-        //_scene.CreateStandardObject("cubex-", cubeModel).MoveTo(new Vector3(-100, 0, 0));
-        //_scene.CreateStandardObject("cubey+", cubeModel).MoveTo(new Vector3(0, 100, 0));
-        //_scene.CreateStandardObject("cubey-", cubeModel).MoveTo(new Vector3(0, -100, 0));
+        var cube = scene.CreateStandardObject("cubez+", cubeModel).MoveTo(new Vector3(0, 0, 100)).Resize(new Vector3(1, 1, 1));
+        //scene.CreateStandardObject("cubez-", cubeModel).MoveTo(new Vector3(0, 0, -100)).Resize(new Vector3(1, 1, 1));
+        //scene.CreateStandardObject("cubex+", cubeModel).MoveTo(new Vector3(100, 0, 0)).Resize(new Vector3(1, 1, 1));
+        //scene.CreateStandardObject("cubex-", cubeModel).MoveTo(new Vector3(-100, 0, 0)).Resize(new Vector3(1, 1, 1));
+        //scene.CreateStandardObject("cubey+", cubeModel).MoveTo(new Vector3(0, 100, 0)).Resize(new Vector3(1, 1, 1));
+        //scene.CreateStandardObject("cubey-", cubeModel).MoveTo(new Vector3(0, -100, 0)).Resize(new Vector3(1, 1, 1));
 
-        _cam = scene.CreateStandardCamera("defaultcam");
-        _cam.SetActiveCamera();
-        _cam.MoveTo(new Vector3(0, 0, 0));
-        _cam.LookAt(cube);
+        _cam = scene.CreateStandardCamera("defaultcam").SetActiveCamera().MoveTo(new Vector3(0, 0, 0)).LookAt(cube);
         _mouse = _inputFactory.GetMouse();
         _keyboard = _inputFactory.GetKeyBoard();
     }

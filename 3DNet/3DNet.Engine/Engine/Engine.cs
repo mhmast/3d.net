@@ -46,6 +46,7 @@ namespace _3DNet.Engine.Engine
             }
             while (_running)
             {
+                _context.Update();
                 _activeScene.Update();
                 if(!_running)
                 {

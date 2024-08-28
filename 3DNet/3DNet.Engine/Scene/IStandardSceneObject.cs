@@ -2,7 +2,7 @@
 
 namespace _3DNet.Engine.Scene;
 
-public interface IStandardSceneObject : ISceneObject
+public interface IStandardSceneObject : ISceneObject<IStandardSceneObject>
 {
-    void Resize(Vector3 boundingBox);
+    IStandardSceneObject Resize(Vector3 boundingBox);
 }

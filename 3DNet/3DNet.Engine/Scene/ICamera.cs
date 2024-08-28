@@ -1,8 +1,7 @@
 ﻿namespace _3DNet.Engine.Scene
 {
-    public interface ICamera : ISceneObject
+    public interface ICamera : ISceneObject<ICamera>
     {
-        void SetActiveCamera();
-        void LookAt(ISceneObject obj);
+        ICamera SetActiveCamera();
     }
 }

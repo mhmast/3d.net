@@ -3,13 +3,14 @@ using System.Numerics;
 
 namespace _3DNet.Engine.Scene
 {
-    internal class StandardCamera : BaseSceneObject, ICamera
+    internal class StandardCamera : BaseSceneObject<ICamera>, ICamera
     {
         private Matrix4x4 _view;
 
         public StandardCamera(Scene scene, string name) : base(scene, name)
         {
         }
+        protected override ICamera Instance => this;
 
         protected override void OnRotationChanged()
         {
@@ -55,6 +56,10 @@ namespace _3DNet.Engine.Scene
             context.SetView(_view);
         }
 
-        public void SetActiveCamera() => SceneInternal.SetActiveCamera(this);
+        public ICamera SetActiveCamera()
+        {
+            SceneInternal.SetActiveCamera(this);
+            return this;
+        }
     }
 }

@@ -9,7 +9,6 @@ using System.Drawing;
 using System.Globalization;
 using System.Numerics;
 using System.Runtime.InteropServices;
-using System.Threading;
 using System.Windows.Forms;
 
 namespace _3DNet.Rendering.D3D12
@@ -36,7 +35,6 @@ namespace _3DNet.Rendering.D3D12
         private RawRectangle _scissorRect;
         private int _renderViewIncrementSize;
         private int _frameIndex;
-        private bool _isControlAlive = true;
         private bool _isResizingSwapChain = false;
         private Action _gotFocus;
         private Action _lostFocus;
@@ -177,7 +175,7 @@ namespace _3DNet.Rendering.D3D12
                 }
             };
             _depthStencilBufferDesc = ResourceDescription.Texture2D(Format.D32_Float, width, height, flags: ResourceFlags.AllowDepthStencil);
-            _viewport = new RawViewportF { X = 0, Y = 0, Width = width, Height = height, MinDepth = 0, MaxDepth = 200 };
+            _viewport = new RawViewportF { X = 0, Y = 0, Width = width, Height = height, MinDepth = 1, MaxDepth = 500 };
             _scissorRect = new RawRectangle { Left = 0, Top = 0, Right = width, Bottom = height };
             Projection = Matrix4x4.CreatePerspectiveFieldOfView((float)System.Math.PI / 4f, width / height, 1, 500);
         }
@@ -302,25 +300,19 @@ namespace _3DNet.Rendering.D3D12
         public void Present()
         {
             _swapChain.Present(1, PresentFlags.None);
-            ProcessWindowMessages();
         }
 
-        private void ProcessWindowMessages()
+        internal void ProcessWindowMessages()
         {
-            if (!_isControlAlive)
+            if (!IsHandleCreated)
             {
                 return;
             }
-            while (Win32Native.PeekMessage(out var lpMsg, Handle, 0, 0, 0) != 0)
+            while (IsHandleCreated && Win32Native.PeekMessage(out var lpMsg, Handle, 0, 0, 0) != 0)
             {
                 if (Win32Native.GetMessage(out lpMsg, Handle, 0, 0) == -1)
                 {
                     throw new InvalidOperationException(string.Format(CultureInfo.InvariantCulture, "An error happened in rendering loop while processing windows messages. Error: {0}", new object[1] { Marshal.GetLastWin32Error() }));
-                }
-
-                if (lpMsg.msg == 130)
-                {
-                    _isControlAlive = false;
                 }
 
                 var message = default(System.Windows.Forms.Message);
@@ -353,5 +345,6 @@ namespace _3DNet.Rendering.D3D12
         {
             context.ResourceBarrierTransition(_backBuffers[_frameIndex], ResourceStates.RenderTarget, ResourceStates.Present);
         }
+
     }
 }

@@ -15,5 +15,6 @@ namespace _3DNet.Engine.Rendering
         void SetIndexBuffer(IntPtr bufferLocation, int sizeInBytes, int strideInBytes);
         void LoadShaderBuffer(int slot, IntPtr address);
         void QueueAction(Action a);
+        void Update();
     }
 }

@@ -44,6 +44,11 @@ namespace _3DNet.Rendering.D3D12
 
         public bool FullScreen => _d3DRenderForm.FullScreen;
 
+        public void Update()
+        {
+            _d3DRenderForm.ProcessWindowMessages();
+        }
+
         public bool BeginScene(Color backgroundColor, long frame)
         {
             if (_d3DRenderForm.IsDisposed)

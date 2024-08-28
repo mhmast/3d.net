@@ -4,7 +4,7 @@ using System.Numerics;
 
 namespace _3DNet.Engine.Scene
 {
-    class StandardSceneObject : BaseSceneObject, IStandardSceneObject
+    internal class StandardSceneObject : BaseSceneObject<IStandardSceneObject>, IStandardSceneObject
     {
 
         private readonly IModel _model;
@@ -15,15 +15,18 @@ namespace _3DNet.Engine.Scene
             _model = model;
         }
 
+        protected override IStandardSceneObject Instance => this;
+
         public override void Render(IRenderContextInternal context)
         {
             context.SetWorld(World);
             _model.Render(context);
         }
-        public void Resize(Vector3 boundingBox)
+        public IStandardSceneObject Resize(Vector3 boundingBox)
         {
             _scale = Matrix4x4.CreateScale(boundingBox/_model.BoundingBox);
             ReCalculateWorld();
+            return this;
         }
 
         protected override void OnWorldRecalculated()

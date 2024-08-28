@@ -8,7 +8,7 @@ namespace _3DNet.Engine.Scene
 {
     internal class Scene : ISceneInternal
     {
-        private readonly Dictionary<string, BaseSceneObject> _createdObjects = new();
+        private readonly Dictionary<string, IRenderable> _createdObjects = new();
         private readonly Engine.Engine _engine;
         private readonly ISceneImpl _impl;
         private IRenderable _activeCamera;
