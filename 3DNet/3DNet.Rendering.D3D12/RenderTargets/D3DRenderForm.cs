@@ -192,11 +192,10 @@ namespace _3DNet.Rendering.D3D12
 
             if (disposing)
             {
-                DisposeBackBuffers();
-                _depthStencilBuffer?.Dispose();
+                FullScreen = false;
+                DisposeSwapchainAndBackBuffers();
                 _depthStencilViewHeap?.Dispose();
                 _renderTargetViewHeap?.Dispose();
-                _swapChain?.Dispose();
             }
             base.Dispose(disposing);
 
@@ -246,23 +245,24 @@ namespace _3DNet.Rendering.D3D12
         {
             //var dbg = _swapChain.GetDevice<SharpDX.Direct3D12.Device>().QueryInterface<DebugDevice>();
             //dbg.ReportLiveDeviceObjects(ReportingLevel.Detail);
-            DisposeBackBuffers();
-            if (FullScreen)
-            {
-                _swapChain.SetFullscreenState(false, null);
-            }
-            _swapChain.Dispose();
+            DisposeSwapchainAndBackBuffers();
+            
             _swapChain = _engine.ReCreateSwapChain(_swapChainDescription);
             ReCreateBuffers();
         }
 
-        private void DisposeBackBuffers()
+        private void DisposeSwapchainAndBackBuffers()
         {
+            if (FullScreen)
+            {
+                _swapChain.SetFullscreenState(false, null);
+            }
             for (var i = 0; i < FrameCount; i++)
             {
                 _backBuffers[i]?.Dispose();
             }
             _depthStencilBuffer.Dispose();
+            _swapChain.Dispose();
         }
 
         private void ReCreateBuffers()

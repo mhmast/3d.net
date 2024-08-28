@@ -13,7 +13,7 @@ internal class DefaultScene : ISceneImpl
     private ICamera _cam;
     private IMouse _mouse;
     private IKeyBoard _keyboard;
-    private const float SensitivityFactor = 0.01f;
+    private const float SensitivityFactor = 0.1f;
 
     public DefaultScene(IModelFactory modelFactory, IInputFactory inputFactory,Game game)
     {
@@ -29,7 +29,7 @@ internal class DefaultScene : ISceneImpl
         ;
         var cubeModel = _modelFactory.CreateCube("cube", 10, 10, 10);
         var cube = scene.CreateStandardObject("cubez+", cubeModel).MoveTo(new Vector3(0, 0, 100)).Resize(new Vector3(1, 1, 1));
-        //scene.CreateStandardObject("cubez-", cubeModel).MoveTo(new Vector3(0, 0, -100)).Resize(new Vector3(1, 1, 1));
+        scene.CreateStandardObject("cubez-", cubeModel).MoveTo(new Vector3(0, 0, -100)).Resize(new Vector3(1, 1, 1));
         //scene.CreateStandardObject("cubex+", cubeModel).MoveTo(new Vector3(100, 0, 0)).Resize(new Vector3(1, 1, 1));
         //scene.CreateStandardObject("cubex-", cubeModel).MoveTo(new Vector3(-100, 0, 0)).Resize(new Vector3(1, 1, 1));
         //scene.CreateStandardObject("cubey+", cubeModel).MoveTo(new Vector3(0, 100, 0)).Resize(new Vector3(1, 1, 1));

@@ -32,7 +32,7 @@ namespace _3DNet.Engine.Scene
         protected override void OnWorldRecalculated()
         {
             base.OnWorldRecalculated();
-            World = _scale * World;
+            World = World * _scale;
         }
     }
 }
