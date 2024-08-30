@@ -19,7 +19,7 @@ using System.Threading;
 
 namespace _3DNet.Rendering.D3D12
 {
-    internal class D3DRenderEngine : IRenderEngine, IShaderFactory
+    internal class D3DRenderEngine : IRenderEngine, IShaderFactory, ICommandBundleExecutor
     {
 #if DEBUG
         private readonly DriverType _driverType = DriverType.Hardware;
@@ -30,7 +30,9 @@ namespace _3DNet.Rendering.D3D12
         private Device _device;
         private CommandQueue _commandQueue;
         private CommandAllocator _commandAllocator;
+        private CommandAllocator _bundleAllocator;
         private GraphicsCommandList _commandList;
+        private readonly IDictionary<string,GraphicsCommandList> _commandLists = new Dictionary<string,GraphicsCommandList>();
         private Fence _fence;
         private long _currentFrame;
         private bool _isDisposed;
@@ -139,6 +141,7 @@ namespace _3DNet.Rendering.D3D12
 
             _commandQueue = _device.CreateCommandQueue(new CommandQueueDescription(CommandListType.Direct));
             _commandAllocator = _device.CreateCommandAllocator(CommandListType.Direct);
+            _bundleAllocator = _device.CreateCommandAllocator(CommandListType.Bundle);
             _commandList = _device.CreateCommandList(CommandListType.Direct, _commandAllocator, null);
             _commandList.Close();
             _fence = _device.CreateFence(0, FenceFlags.None);
@@ -194,16 +197,43 @@ namespace _3DNet.Rendering.D3D12
         public IRenderContext CreateRenderContext(string name, Size size, bool fullScreen, Action<IRenderContextInternal> setActive)
         => new D3DRenderWindowContext(_d3DObjects, CreateWindow(size, name, fullScreen), setActive, this);
 
-        internal void ExecuteCommandsForFrame(Queue<Action<GraphicsCommandList>> actions, IRenderTarget renderTarget, long frame)
+        public void ExecuteCommandBundle(string name, Queue<Action<GraphicsCommandList>> actions)
         {
+            var commandList = GetOrCreateCommandBundle(name);
+            commandList.Reset(_bundleAllocator,null);
+            while (actions.Count > 0)
+            {
+                actions.Dequeue()(commandList);
+            }
+            commandList.Close();
+            _commandList.ExecuteBundle(commandList);
+        }
 
+        private GraphicsCommandList GetOrCreateCommandBundle(string name)
+        {
+            if(!_commandLists.ContainsKey(name))
+            {
+                var list = _device.CreateCommandList(CommandListType.Bundle, _bundleAllocator, null);
+                list.Close();
+                _commandLists.Add(name, list);
+            }
+            return _commandLists[name];
+        }
+
+        internal ICommandBundleExecutor BeginExecuteCommandBundle(Queue<Action<GraphicsCommandList>> actions)
+        {
             _commandAllocator.Reset();
+            _bundleAllocator.Reset();
             _commandList.Reset(_commandAllocator, null);
-
             while (actions.Count > 0)
             {
                 actions.Dequeue()(_commandList);
             }
+            return this;
+        }
+
+        internal void EndExecuteCommandBundle(long frame,IRenderTarget renderTarget)
+        {
             _commandList.Close();
             _commandQueue.ExecuteCommandList(_commandList);
             renderTarget.Present();
@@ -235,6 +265,10 @@ namespace _3DNet.Rendering.D3D12
                     WaitForFrameToComplete(_currentFrame);
 
                     _commandAllocator.Dispose();
+                    foreach(var commandList in _commandLists.Values)
+                    {
+                        commandList.Dispose();
+                    }
                     _commandList.Dispose();
                     _commandQueue.Dispose();
                     _fence.Dispose();
@@ -260,5 +294,7 @@ namespace _3DNet.Rendering.D3D12
             Dispose(disposing: true);
             GC.SuppressFinalize(this);
         }
+
+
     }
 }
