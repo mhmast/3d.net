@@ -49,9 +49,11 @@ namespace _3DNet.Engine.Scene
                 return;
             }
             _activeCamera?.Render(context);
-            foreach (var obj in _createdObjects.Values)
+            foreach (var obj in _createdObjects)
             {
-                obj.Render(context);
+                context.BeginObject(obj.Key);
+                obj.Value.Render(context);
+                context.EndObject(obj.Key);
             }
             context.EndScene(frame);
         }

@@ -8,7 +8,8 @@ namespace _3DNet.Engine.Rendering
     {
         IRenderWindow RenderWindow { get; }
         bool IsDisposed { get; }
-        WvpBuffer WvpBuffer{ get; }
+        ViewProjectionBuffer ViewProjectionBuffer{ get; }
+        WorldBuffer WorldBuffer{ get; }
 
         void SetWorld(Matrix4x4 world);
         void SetView(Matrix4x4 view);

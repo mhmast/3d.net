@@ -16,6 +16,7 @@ namespace _3DNet.Rendering.D3D12.Buffer
         private readonly DescriptorHeap _shaderHeap;
         public int Length { get; }
         public long SizeInBytes { get; }
+        private object _lastWritenValue;
 
         private readonly IShaderBufferDataAdapter _dataAdapter;
 
@@ -102,7 +103,11 @@ namespace _3DNet.Rendering.D3D12.Buffer
         public unsafe void Write<T>(T value)
             where T : struct
         {
-            _dataAdapter.ConvertAndWrite(value, this);
+            if (!value.Equals(_lastWritenValue))
+            {
+                _dataAdapter.ConvertAndWrite(value, this);
+                _lastWritenValue = value;
+            }
         }
 
         unsafe void IBufferWriter.Write<T>(T o) where T : struct

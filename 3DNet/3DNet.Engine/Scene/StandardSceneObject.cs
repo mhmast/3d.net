@@ -20,7 +20,7 @@ namespace _3DNet.Engine.Scene
         public override void Render(IRenderContextInternal context)
         {
             context.SetWorld(World);
-            _model.Render(context);
+            _model.Render(context,Name);
         }
         public IStandardSceneObject Resize(Vector3 boundingBox)
         {

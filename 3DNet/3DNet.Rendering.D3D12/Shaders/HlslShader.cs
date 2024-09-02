@@ -7,6 +7,7 @@ using SharpDX.Direct3D;
 using SharpDX.Direct3D12;
 using SharpDX.DXGI;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace _3DNet.Rendering.D3D12.Shaders
 {
@@ -19,7 +20,9 @@ namespace _3DNet.Rendering.D3D12.Shaders
         private PipelineState _graphicsPipelineState;
         private D3DRenderWindowContext _context;
         private RootSignature _rootSignature;
-        private readonly string _wvpBufferName;
+        private readonly string _vpBufferName;
+        private readonly string _objectWorldBufferName;
+        private readonly ShaderBufferDescription _worldShaderBufferDescription;
 
         public HlslShader(string name, D3DRenderEngine d3DRenderEngine, Engine.Rendering.Shader.ShaderDescription shaderDescription)
         {
@@ -28,7 +31,8 @@ namespace _3DNet.Rendering.D3D12.Shaders
             _shaderDescription = shaderDescription;
             _d3DRenderEngine.RenderTargetCreated += RecreateShader;
             _d3DRenderEngine.RegisterD3DObject(this);
-            _wvpBufferName = shaderDescription.WvpBufferName;
+            _vpBufferName = shaderDescription.ViewProjectionBufferName;
+            _objectWorldBufferName = shaderDescription.ObjectWorldBufferName;
             _shaderHeap = _d3DRenderEngine.CreateDescriptorHeap(new DescriptorHeapDescription
             {
                 DescriptorCount = 1,
@@ -37,16 +41,23 @@ namespace _3DNet.Rendering.D3D12.Shaders
             });
             foreach (var description in shaderDescription.Buffers)
             {
-                _buffers.Add(description.Name, new D3D12ShaderBuffer(_d3DRenderEngine, _shaderHeap, description));
+                if (description.Name != _objectWorldBufferName)
+                {
+                    _buffers.Add(description.Name, new D3D12ShaderBuffer(_d3DRenderEngine, _shaderHeap, description));
+                }
+                else
+                {
+                    _worldShaderBufferDescription = description;
+                }
             }
         }
 
         private void RecreateShader()
         {
-            var rootSignatureDesc = new RootSignatureDescription(RootSignatureFlags.AllowInputAssemblerInputLayout, new[]
+            var rootSignatureDesc = new RootSignatureDescription(RootSignatureFlags.AllowInputAssemblerInputLayout, _shaderDescription.Buffers.Select(b => new RootParameter(ShaderVisibility.All, new RootDescriptor 
             {
-                new RootParameter(ShaderVisibility.All,new RootDescriptor(),RootParameterType.ConstantBufferView)
-            });
+                ShaderRegister = b.Slot,
+            }, RootParameterType.ConstantBufferView)).ToArray());
             _rootSignature = _d3DRenderEngine.CreateRootSignature(rootSignatureDesc.Serialize());
 
             var inputElementDescs = new[]
@@ -74,7 +85,7 @@ namespace _3DNet.Rendering.D3D12.Shaders
                 PrimitiveTopologyType = PrimitiveTopologyType.Triangle,
                 RenderTargetCount = _d3DRenderEngine.NoOfCreatedTargets,
 #if DEBUG
-//                Flags = PipelineStateFlags.ToolDebug,
+                //                Flags = PipelineStateFlags.ToolDebug,
 #endif
                 SampleDescription = new SampleDescription(1, 0),
                 StreamOutput = new StreamOutputDescription()
@@ -105,7 +116,7 @@ namespace _3DNet.Rendering.D3D12.Shaders
         {
             return new SharpDX.Direct3D12.ShaderBytecode(SharpDX.D3DCompiler.ShaderBytecode.CompileFromFile(shaderFile, method, profile,
 #if DEBUG
-           //      ShaderFlags.WarningsAreErrors | ShaderFlags.Debug | ShaderFlags.SkipOptimization | ShaderFlags.DebugNameForSource |
+                 //      ShaderFlags.WarningsAreErrors | ShaderFlags.Debug | ShaderFlags.SkipOptimization | ShaderFlags.DebugNameForSource |
 
 #endif
                  ShaderFlags.PackMatrixRowMajor
@@ -117,9 +128,9 @@ namespace _3DNet.Rendering.D3D12.Shaders
 
         public string Name { get; }
 
-        public IWritableBuffer WvpBuffer => Buffers[_wvpBufferName];
-
         public IDictionary<string, IWritableBuffer> Buffers => _buffers;
+
+        public IWritableBuffer ViewProjectionBuffer => Buffers[_vpBufferName];
 
         public void Begin(D3DRenderWindowContext context)
         {
@@ -146,12 +157,16 @@ namespace _3DNet.Rendering.D3D12.Shaders
             _context.SetPrimitiveTopology(PrimitiveTopology.TriangleList);
             _context.SetPipelineState(_graphicsPipelineState);
             _context.SetGraphicsRootSignature(_rootSignature);
-            foreach (var buffer in _buffers.Values)
-            {
-                buffer.Load(context);
-            }
         }
 
-
+        public IWritableBuffer GetOrCreateWorldBufferForObject(string name)
+        {
+            var bufferName = $"worldbuffer_{name}";
+            if (!_buffers.ContainsKey(bufferName))
+            {
+                _buffers.Add(bufferName, new D3D12ShaderBuffer(_d3DRenderEngine, _shaderHeap, _worldShaderBufferDescription));
+            }
+            return _buffers[bufferName];
+        }
     }
 }

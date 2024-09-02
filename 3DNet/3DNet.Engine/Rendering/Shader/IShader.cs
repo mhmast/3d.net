@@ -1,6 +1,5 @@
 ﻿using _3DNet.Rendering.Buffer;
 using System;
-using System.Collections.Generic;
 
 namespace _3DNet.Engine.Rendering.Shader
 {
@@ -8,8 +7,8 @@ namespace _3DNet.Engine.Rendering.Shader
     {
         string Name { get; }
         string ShaderSignature { get; }
-        IWritableBuffer WvpBuffer { get; }
-        IDictionary<string, IWritableBuffer> Buffers { get; }
+        IWritableBuffer ViewProjectionBuffer { get; }
+        IWritableBuffer GetOrCreateWorldBufferForObject(string name);
         void Load(IRenderContextInternal context);
     }
 }

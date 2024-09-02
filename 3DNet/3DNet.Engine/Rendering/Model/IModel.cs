@@ -7,6 +7,6 @@ namespace _3DNet.Engine.Rendering.Model
     {
         Vector3 BoundingBox { get; }
         IShader Shader { get;  }
-        void Render(IRenderContextInternal renderContext);
+        void Render(IRenderContextInternal renderContext,string objectName);
     }
 }

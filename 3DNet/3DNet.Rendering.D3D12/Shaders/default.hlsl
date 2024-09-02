@@ -1,9 +1,13 @@
 ﻿
 cbuffer globals
 {
-	matrix world;
 	matrix view;
 	matrix projection;
+};
+	
+cbuffer perObject
+{
+	matrix world;
 };
 
 struct VSInput

@@ -14,17 +14,20 @@ namespace _3DNet.Rendering.D3D12
 {
     internal class D3DRenderWindowContext : IRenderContextInternal
     {
-        private const string DefaultCommandQueue = "Default";
-        private string _currentCommandQueue = DefaultCommandQueue;
-        private readonly IDictionary<string, Queue<Action<GraphicsCommandList>>> _commandQueues = new Dictionary<string, Queue<Action<GraphicsCommandList>>>();
+        //private const string BeginCommandQueue = "Begin";
+        //private const string EndCommandQueue = "End";
+        //private string _currentCommandQueue = BeginCommandQueue;
+        private readonly Queue<Action<GraphicsCommandList>> _commandQueue = new Queue<Action<GraphicsCommandList>>();
+        //private readonly IDictionary<string, Queue<Action<GraphicsCommandList>>> _commandQueues = new Dictionary<string, Queue<Action<GraphicsCommandList>>>();
         private readonly IEnumerable<ID3DObject> _d3DObjects;
         private readonly D3DRenderForm _d3DRenderForm;
         private readonly Action<IRenderContextInternal> _setActive;
         private readonly D3DRenderEngine _d3DRenderEngine;
         private bool _disposing;
-        private WvpBuffer _worldViewProjectionBuffer = new();
+        private ViewProjectionBuffer _viewProjectionBuffer = new();
+        private WorldBuffer _worldBuffer = new();
 
-        private Queue<Action<GraphicsCommandList>> CommandQueue { get => _commandQueues[_currentCommandQueue]; }
+        private Queue<Action<GraphicsCommandList>> CommandQueue { get => _commandQueue; }//_commandQueues[_currentCommandQueue]; }
 
         public event Action GotFocus;
         public event Action LostFocus;
@@ -37,14 +40,16 @@ namespace _3DNet.Rendering.D3D12
             _d3DRenderEngine = d3DRenderEngine;
             d3DRenderForm.GotFocus += (_, __) => GotFocus?.DynamicInvoke();
             d3DRenderForm.LostFocus += (_, __) => LostFocus?.DynamicInvoke();
-            EnsureCommandQueue(DefaultCommandQueue);
+            //EnsureCommandQueue(BeginCommandQueue);
+            //EnsureCommandQueue(EndCommandQueue);
         }
 
         public IRenderWindow RenderWindow => _d3DRenderForm;
 
         public bool IsDisposed { get; private set; }
 
-        public WvpBuffer WvpBuffer => _worldViewProjectionBuffer;
+        public ViewProjectionBuffer ViewProjectionBuffer => _viewProjectionBuffer;
+        public WorldBuffer WorldBuffer => _worldBuffer;
 
         public bool FullScreen => _d3DRenderForm.FullScreen;
 
@@ -59,50 +64,59 @@ namespace _3DNet.Rendering.D3D12
             {
                 return false;
             }
-            ClearQueues();
-            _currentCommandQueue = DefaultCommandQueue;
-            EnsureCommandQueue(_currentCommandQueue);
+            //ClearQueues();
+            _commandQueue.Clear();
+            //_currentCommandQueue = BeginCommandQueue;
             foreach (var d3DObject in _d3DObjects)
             {
                 d3DObject.Begin(this);
             }
-
             _d3DRenderForm.Begin(this);
             _d3DRenderForm.Clear(this, backgroundColor);
             return true;
         }
 
-        private void EnsureCommandQueue(string currentCommandQueue)
-        {
-            if (!_commandQueues.ContainsKey(currentCommandQueue))
-            {
-                _commandQueues.Add(currentCommandQueue, new Queue<Action<GraphicsCommandList>>());
-            }
-        }
+        //private void EnsureCommandQueue(string currentCommandQueue)
+        //{
+        //    if (!_commandQueues.ContainsKey(currentCommandQueue))
+        //    {
+        //        _commandQueues.Add(currentCommandQueue, new Queue<Action<GraphicsCommandList>>());
+        //    }
+        //}
 
-        private void ClearQueues()
-        {
-            foreach (var queue in _commandQueues.Values)
-            {
-                queue.Clear();
-            }
-        }
+        //private void ClearQueues()
+        //{
+        //    foreach (var queue in _commandQueues.Values)
+        //    {
+        //        queue.Clear();
+        //    }
+        //}
 
         public void EndScene(long frame)
         {
+            //_currentCommandQueue = EndCommandQueue;
             foreach (var d3DObject in _d3DObjects)
             {
                 d3DObject.End(this);
             }
             _d3DRenderForm.End(this);
-            var executor = _d3DRenderEngine.BeginExecuteCommandBundle(_commandQueues[DefaultCommandQueue]);
-            foreach (var queue in _commandQueues.Where(k=>k.Key != DefaultCommandQueue))
-            {
-                executor.ExecuteCommandBundle(queue.Key, queue.Value);
-            }
-            _d3DRenderEngine.EndExecuteCommandBundle(frame, _d3DRenderForm);
+            //var executor = _d3DRenderEngine.BeginExecuteCommandBundle(_commandQueues[BeginCommandQueue], frame);
+            //foreach (var queue in _commandQueues.Where(k => k.Key != BeginCommandQueue && k.Key != EndCommandQueue))
+            //{
+            //    executor.ExecuteCommandBundle(queue.Key, queue.Value, frame);
+            //}
+            _d3DRenderEngine.ExecuteCommandList(_commandQueue, frame, _d3DRenderForm);
+            //_d3DRenderEngine.ExecuteCommandList(_commandQueues[EndCommandQueue], frame, _d3DRenderForm);
         }
+        public void BeginObject(string name)
+        {
+            //_currentCommandQueue = name;
+            //EnsureCommandQueue(name);
+        }
+        public void EndObject(string name)
+        {
 
+        }
 
         public void ClearDepthStencilView(IntPtr ptr, float depth, byte stencil) => CommandQueue.Enqueue(c => c.ClearDepthStencilView(new CpuDescriptorHandle { Ptr = ptr }, ClearFlags.FlagsDepth | ClearFlags.FlagsStencil, depth, stencil));
 
@@ -137,15 +151,15 @@ namespace _3DNet.Rendering.D3D12
         };
 
         public void SetProjection(Matrix4x4 projection)
-        => CommandQueue.Enqueue(c => _worldViewProjectionBuffer.projection = projection);
+        => CommandQueue.Enqueue(c => _viewProjectionBuffer.projection = projection);
 
         public void SetVertexBuffer(IntPtr bufferLocation, int sizeInBytes, int strideInBytes)
         => CommandQueue.Enqueue(c => c.SetVertexBuffer(0, new VertexBufferView { BufferLocation = bufferLocation.ToInt64(), SizeInBytes = sizeInBytes, StrideInBytes = strideInBytes }));
 
         public void SetView(Matrix4x4 view)
-        => CommandQueue.Enqueue(c => _worldViewProjectionBuffer.view = view);
+        => CommandQueue.Enqueue(c => _viewProjectionBuffer.view = view);
         public void SetWorld(Matrix4x4 world)
-        => CommandQueue.Enqueue(c => _worldViewProjectionBuffer.world = world);
+        => CommandQueue.Enqueue(c => _worldBuffer.world = world);
 
         internal void ResourceBarrierTransition(Resource buffer, ResourceStates oldState, ResourceStates newState)
        => CommandQueue.Enqueue(c =>
@@ -182,14 +196,6 @@ namespace _3DNet.Rendering.D3D12
             c.SetRenderTargets(renderTarget, depthStencil);
         });
         public void SetActiveContext() => _setActive(this);
-        public void BeginObject(string name)
-        {
-            _currentCommandQueue = name;
-            EnsureCommandQueue(name);
-        }
-        public void EndObject(string name)
-        {
-            _currentCommandQueue = DefaultCommandQueue;
-        }
+
     }
 }

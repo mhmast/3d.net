@@ -6,7 +6,8 @@ using SharpDX.Direct3D;
 using SharpDX.Direct3D12;
 using System.Collections.Generic;
 using _3DNet.Rendering.D3D12.Buffer;
-using NativeWvpBuffer = _3DNet.Rendering.D3D12.Buffer.WvpBuffer;
+using NativeVpBuffer = _3DNet.Rendering.D3D12.Buffer.ViewProjectionBuffer;
+using NativeWorldBuffer = _3DNet.Rendering.D3D12.Buffer.WorldBuffer;
 using System;
 using _3DNet.Rendering.D3D12.RenderTargets;
 using System.Linq;
@@ -14,12 +15,13 @@ using _3DNet.Rendering.D3D12.Shaders;
 using _3DNet.Engine.Rendering.Shader;
 using System.IO;
 using System.Diagnostics;
-using WvpBuffer = _3DNet.Engine.Rendering.Buffer.WvpBuffer;
+using ViewProjectionBuffer = _3DNet.Engine.Rendering.Buffer.ViewProjectionBuffer;
+using WorldBuffer = _3DNet.Engine.Rendering.Buffer.WorldBuffer;
 using System.Threading;
 
 namespace _3DNet.Rendering.D3D12
 {
-    internal class D3DRenderEngine : IRenderEngine, IShaderFactory, ICommandBundleExecutor
+    internal class D3DRenderEngine : IRenderEngine, IShaderFactory//, ICommandBundleExecutor
     {
 #if DEBUG
         private readonly DriverType _driverType = DriverType.Hardware;
@@ -32,7 +34,7 @@ namespace _3DNet.Rendering.D3D12
         private CommandAllocator _commandAllocator;
         private CommandAllocator _bundleAllocator;
         private GraphicsCommandList _commandList;
-        private readonly IDictionary<string,GraphicsCommandList> _commandLists = new Dictionary<string,GraphicsCommandList>();
+        private readonly IDictionary<string, Fence> _fences = new Dictionary<string, Fence>();
         private Fence _fence;
         private long _currentFrame;
         private bool _isDisposed;
@@ -145,9 +147,14 @@ namespace _3DNet.Rendering.D3D12
             _commandList = _device.CreateCommandList(CommandListType.Direct, _commandAllocator, null);
             _commandList.Close();
             _fence = _device.CreateFence(0, FenceFlags.None);
-            var bufferAdapter = _shaderBufferDataConverterBuilder.AddConverter<WvpBuffer, NativeWvpBuffer>(m => (NativeWvpBuffer)m).Build();
-            var buffers = new[] { ShaderBufferDescription.Create<NativeWvpBuffer>("globals", 0, BufferType.GPUInput, BufferUsage.VertexShader, bufferAdapter) };
-            var defaultShaderDescription = new ShaderDescription(Path.Combine(_basePath, "Shaders", "default.hlsl"), "vs_5_0", "VSMain", "ps_5_0", "PSMain", buffers, "globals");
+            var vpBufferAdapter = _shaderBufferDataConverterBuilder.AddConverter<ViewProjectionBuffer, NativeVpBuffer>(m => (NativeVpBuffer)m).Build();
+            var worldBufferAdapter = _shaderBufferDataConverterBuilder.AddConverter<WorldBuffer, NativeWorldBuffer>(m => (NativeWorldBuffer)m).Build();
+            var buffers = new[]
+            {
+                ShaderBufferDescription.Create<NativeVpBuffer>("globals", 0, BufferType.GPUInput, BufferUsage.VertexShader, vpBufferAdapter),
+                ShaderBufferDescription.Create<NativeWorldBuffer>("perObject", 1, BufferType.GPUInput, BufferUsage.VertexShader, worldBufferAdapter)
+            };
+            var defaultShaderDescription = new ShaderDescription(Path.Combine(_basePath, "Shaders", "default.hlsl"), "vs_5_0", "VSMain", "ps_5_0", "PSMain", buffers, "globals", "perObject");
             DefaultShader = LoadShader("Default", defaultShaderDescription);
         }
 
@@ -197,43 +204,60 @@ namespace _3DNet.Rendering.D3D12
         public IRenderContext CreateRenderContext(string name, Size size, bool fullScreen, Action<IRenderContextInternal> setActive)
         => new D3DRenderWindowContext(_d3DObjects, CreateWindow(size, name, fullScreen), setActive, this);
 
-        public void ExecuteCommandBundle(string name, Queue<Action<GraphicsCommandList>> actions)
-        {
-            var commandList = GetOrCreateCommandBundle(name);
-            commandList.Reset(_bundleAllocator,null);
-            while (actions.Count > 0)
-            {
-                actions.Dequeue()(commandList);
-            }
-            commandList.Close();
-            _commandList.ExecuteBundle(commandList);
-        }
+        //public void ExecuteCommandBundle(string name, Queue<Action<GraphicsCommandList>> actions, long frame)
+        //{
+        //    var commandListFence = GetOrCreateFence(name);
+        //    while (actions.Count > 0)
+        //    {
+        //        actions.Dequeue()(_commandList);
+        //    }
+        //    _commandList.Close();
+        //    //_commandList.ExecuteBundle(commandListFence.Item1);
+        //    //_commandList.Close();
+        //    _commandQueue.ExecuteCommandList(_commandList);
+        //    WaitForFence(frame, commandListFence);
 
-        private GraphicsCommandList GetOrCreateCommandBundle(string name)
-        {
-            if(!_commandLists.ContainsKey(name))
-            {
-                var list = _device.CreateCommandList(CommandListType.Bundle, _bundleAllocator, null);
-                list.Close();
-                _commandLists.Add(name, list);
-            }
-            return _commandLists[name];
-        }
 
-        internal ICommandBundleExecutor BeginExecuteCommandBundle(Queue<Action<GraphicsCommandList>> actions)
+        //    //Leave it in the open state
+        //    _commandAllocator.Reset();
+        //    _commandList.Reset(_commandAllocator, null);
+        //}
+
+        //private Fence GetOrCreateFence(string name)
+        //{
+        //    if (!_fences.ContainsKey(name))
+        //    {
+        //        var fence = _device.CreateFence(0, FenceFlags.None);
+        //        _fences.Add(name, fence);
+        //    }
+        //    return _fences[name];
+        //}
+
+        //internal ICommandBundleExecutor BeginExecuteCommandBundle(Queue<Action<GraphicsCommandList>> beginActions, long frame)
+        //{
+        //    _commandAllocator.Reset();
+        //    _commandList.Reset(_commandAllocator, null);
+        //    while (beginActions.Count > 0)
+        //    {
+        //        beginActions.Dequeue()(_commandList);
+        //    }
+        //    _commandList.Close();
+        //    _commandQueue.ExecuteCommandList(_commandList);
+        //    WaitForFence(frame, _fence);
+        //    //Leave it in the open state for objects
+        //    _commandAllocator.Reset();
+        //    _commandList.Reset(_commandAllocator, null);
+        //    return this;
+        //}
+
+        internal void ExecuteCommandList(Queue<Action<GraphicsCommandList>> endActions, long frame, IRenderTarget renderTarget)
         {
             _commandAllocator.Reset();
-            _bundleAllocator.Reset();
             _commandList.Reset(_commandAllocator, null);
-            while (actions.Count > 0)
+            while (endActions.Count > 0)
             {
-                actions.Dequeue()(_commandList);
+                endActions.Dequeue()(_commandList);
             }
-            return this;
-        }
-
-        internal void EndExecuteCommandBundle(long frame,IRenderTarget renderTarget)
-        {
             _commandList.Close();
             _commandQueue.ExecuteCommandList(_commandList);
             renderTarget.Present();
@@ -241,15 +265,15 @@ namespace _3DNet.Rendering.D3D12
             _currentFrame = frame;
             if (!_isDisposed)
             {
-                WaitForFrameToComplete(_currentFrame);
+                WaitForFence(frame, _fence);
             }
         }
-        private void WaitForFrameToComplete(long frame)
+        private void WaitForFence(long frame, Fence fence)
         {
-            _commandQueue.Signal(_fence, frame);
-            if (_fence.CompletedValue < frame)
+            _commandQueue.Signal(fence, frame);
+            if (fence.CompletedValue < frame)
             {
-                _fence.SetEventOnCompletion(frame, _renderHandle.SafeWaitHandle.DangerousGetHandle());
+                fence.SetEventOnCompletion(frame, _renderHandle.SafeWaitHandle.DangerousGetHandle());
                 _renderHandle.WaitOne();
             }
         }
@@ -262,16 +286,19 @@ namespace _3DNet.Rendering.D3D12
             {
                 if (disposing)
                 {
-                    WaitForFrameToComplete(_currentFrame);
-
+                    WaitForFence(_currentFrame, _fence);
+                    _fence.Dispose();
+                    //WaitForFence(_currentFrame, _endFence);
+                    //_endFence.Dispose();
+                    //foreach (var fence in _fences.Values)
+                    //{
+                    //    WaitForFence(_currentFrame, fence);
+                    //    fence.Dispose();
+                    //}
+                    _bundleAllocator.Dispose();
                     _commandAllocator.Dispose();
-                    foreach(var commandList in _commandLists.Values)
-                    {
-                        commandList.Dispose();
-                    }
                     _commandList.Dispose();
                     _commandQueue.Dispose();
-                    _fence.Dispose();
                     _device.Dispose();
                 }
 
