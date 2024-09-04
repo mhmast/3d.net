@@ -43,7 +43,7 @@ namespace _3DNet.Rendering.D3D12.Shaders
             {
                 if (description.Name != _objectWorldBufferName)
                 {
-                    _buffers.Add(description.Name, new D3D12ShaderBuffer(_d3DRenderEngine, _shaderHeap, description));
+                    _buffers.Add(description.Name, new D3D12ShaderBuffer(_d3DRenderEngine, _shaderHeap, description, description.Name));
                 }
                 else
                 {
@@ -54,7 +54,7 @@ namespace _3DNet.Rendering.D3D12.Shaders
 
         private void RecreateShader()
         {
-            var rootSignatureDesc = new RootSignatureDescription(RootSignatureFlags.AllowInputAssemblerInputLayout, _shaderDescription.Buffers.Select(b => new RootParameter(ShaderVisibility.All, new RootDescriptor 
+            var rootSignatureDesc = new RootSignatureDescription(RootSignatureFlags.AllowInputAssemblerInputLayout, _shaderDescription.Buffers.Select(b => new RootParameter(ShaderVisibility.All, new RootDescriptor
             {
                 ShaderRegister = b.Slot,
             }, RootParameterType.ConstantBufferView)).ToArray());
@@ -164,7 +164,7 @@ namespace _3DNet.Rendering.D3D12.Shaders
             var bufferName = $"worldbuffer_{name}";
             if (!_buffers.ContainsKey(bufferName))
             {
-                _buffers.Add(bufferName, new D3D12ShaderBuffer(_d3DRenderEngine, _shaderHeap, _worldShaderBufferDescription));
+                _buffers.Add(bufferName, new D3D12ShaderBuffer(_d3DRenderEngine, _shaderHeap, _worldShaderBufferDescription, bufferName));
             }
             return _buffers[bufferName];
         }

@@ -23,10 +23,17 @@ namespace _3DNet.Engine.Rendering.Model
 
         public void Render(IRenderContextInternal context, string instanceName)
         {
-            Shader.ViewProjectionBuffer.Write(context.ViewProjectionBuffer);
+            context.QueueAction(() =>
+            {
+                Shader.ViewProjectionBuffer.Write(context.ViewProjectionBuffer);
+            });
             var buffer = Shader.GetOrCreateWorldBufferForObject(instanceName);
-            buffer.Write(context.WorldBuffer);
+            context.QueueAction(() =>
+            {
+                buffer.Write(context.WorldBuffer);
+            });
             Shader.Load(context);
+            Shader.ViewProjectionBuffer.Load(context);
             buffer.Load(context);
             context.Draw(_vertexBuffer, _indexBuffer);
         }

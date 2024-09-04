@@ -20,7 +20,7 @@ namespace _3DNet.Rendering.D3D12.Buffer
 
         private readonly IShaderBufferDataAdapter _dataAdapter;
 
-        public D3D12ShaderBuffer(D3DRenderEngine d3DRenderEngine, DescriptorHeap shaderHeap, ShaderBufferDescription bufferDesc)
+        public D3D12ShaderBuffer(D3DRenderEngine d3DRenderEngine, DescriptorHeap shaderHeap, ShaderBufferDescription bufferDesc,string name)
         {
             _bufferDesc = bufferDesc;
             var size = Marshal.SizeOf(bufferDesc.DataType);
@@ -33,7 +33,7 @@ namespace _3DNet.Rendering.D3D12.Buffer
 
             _buffer = _d3DRenderEngine.CreateCommittedResource(new HeapProperties { Type = GetHeapType(_bufferDesc.Type), CPUPageProperty = CpuPageProperty.Unknown }, HeapFlags.None,
                ResourceDescription.Buffer(size), GetResourceState(_bufferDesc.Type, GetResourceState(_bufferDesc.BufferUsage)));
-            _buffer.Name = bufferDesc.Name;
+            _buffer.Name = name;
             var cbvDesc = new ConstantBufferViewDescription()
             {
                 BufferLocation = _buffer.GPUVirtualAddress,
