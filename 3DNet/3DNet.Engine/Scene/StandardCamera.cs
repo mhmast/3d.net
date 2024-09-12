@@ -25,11 +25,11 @@ namespace _3DNet.Engine.Scene
             //// Create a 4x4 orientation matrix from the right, up, and forward vectors
             //// This is transposed which is equivalent to performing an inverse 
             //// if the matrix is orthonormalized (in this case, it is).
-            //var orientation = new Matrix4x4(
-            //   Right.X, Up.X, Forward.X, 0,
-            //   Right.Y, Up.Y, Forward.Y, 0,
-            //   Right.Z, Up.Z, Forward.Z, 0,
-            //   0, 0, 0, 1);
+            var orientation = new Matrix4x4(
+               Right.X, Right.Y, Right.Z, 0,
+               Up.X, Up.Y, Up.Z, 0,
+               Forward.X, Forward.Y, Forward.Z, 0,
+               0, 0, 0, 1);
 
             //// Create a 4x4 translation matrix.
             //// The eye position is negated which is equivalent
@@ -37,18 +37,19 @@ namespace _3DNet.Engine.Scene
             //// T(v)^-1 == T(-v)
 
 
-            //var translation = new Matrix4x4(
-            //    1, 0, 0, 0,
-            //    0, 1, 0, 0,
-            //    0, 0, 1, 0,
-            //    -Position.X, -Position.Y, -Position.Z, 0);
+            var translation = new Matrix4x4(
+                1, 0, 0, -Position.X,
+                0, 1, 0, -Position.Y,
+                0, 0, 1, -Position.Z,
+                0, 0, 0, 1);
             //// Combine the orientation and translation to compute 
             //// the final view matrix. Note that the order of 
             //// multiplication is reversed because the matrices
             //// are already inverted.
 
 
-            _view = Matrix4x4.CreateLookAt(Position, Forward, Up);
+            _view = translation * orientation;//
+                    //Matrix4x4.CreateLookAt(Position, Forward, Up);
         }
 
         public override void Render(IRenderContextInternal context)

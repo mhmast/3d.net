@@ -2,6 +2,9 @@
 using _3DNet.Engine.Rendering;
 using System;
 using System.Numerics;
+using System.Diagnostics;
+using _3DNet.Math;
+using System.Linq;
 
 namespace _3DNet.Engine.Scene
 {
@@ -12,7 +15,7 @@ namespace _3DNet.Engine.Scene
         private Vector3 _forward = new Vector3(0, 0, 1);
         private Vector3 _up = new Vector3(0, 1, 0);
         private Vector3 _right = new Vector3(1, 0, 0);
-        private Quaternion _rotationQuat = Quaternion.Identity;
+
 
         protected BaseSceneObject(Scene scene, string name)
         {
@@ -24,8 +27,8 @@ namespace _3DNet.Engine.Scene
         protected virtual void OnTranslationChanged() { }
         protected virtual void OnRotationChanged()
         {
-            var eulers = _rotationQuat.ToEulerAngles();
-           // Debug.WriteLine($"pitch: {eulers.X} yaw:{eulers.Y} roll:{eulers.Z}");
+
+            // Debug.WriteLine($"pitch: {eulers.X} yaw:{eulers.Y} roll:{eulers.Z}");
         }
 
         protected virtual void OnScaleChanged() { }
@@ -46,6 +49,7 @@ namespace _3DNet.Engine.Scene
         public Vector3 Up => _up;
 
         public Vector3 Right => _right;
+
 
 
         protected void ReCalculateWorld()
@@ -101,14 +105,17 @@ namespace _3DNet.Engine.Scene
         }
 
 
-        public T Rotate(Vector3 axis, float degrees)
+        public T Rotate(params Rotation[] rotations)
         {
-            if (degrees == 0) return Instance;
-            var rads = degrees * (MathF.PI / 180f);
-            _rotationQuat = Quaternion.Concatenate(_rotationQuat, Quaternion.CreateFromAxisAngle(axis, rads)).Normalize();
-            _up = Vector3.Transform(new Vector3(0, 1, 0), _rotationQuat);
-            _forward = Vector3.Transform(new Vector3(0, 0, 1), _rotationQuat);
-            _right = Vector3.Transform(new Vector3(1, 0, 0), _rotationQuat);
+            var epsilon = 0.01f;
+
+            var rotationQuat = rotations.Select(rotation => Quaternion.CreateFromAxisAngle(rotation.Axis, rotation.Radians)).Aggregate(Quaternion.Concatenate).Normalize();
+            _up = Vector3.Transform(_up, rotationQuat).Normalize().ClampEpsilon(epsilon);
+            _forward = Vector3.Transform(_forward, rotationQuat).Normalize().ClampEpsilon(epsilon);
+            _right = Vector3.Transform(_right, rotationQuat).Normalize().ClampEpsilon(epsilon);
+
+            //Debug.Assert(_right.Y == 0);
+
             ReCalculateWorld();
             OnRotationChanged();
             return Instance;

@@ -1,4 +1,5 @@
-﻿using System.Numerics;
+﻿using _3DNet.Math;
+using System.Numerics;
 
 namespace _3DNet.Engine.Scene
 {
@@ -16,7 +17,7 @@ namespace _3DNet.Engine.Scene
         T MoveForward(Vector3 relativeAmount);
         T MoveTo(Vector3 position);
         T LookAt(ISceneObject obj);
-        T Rotate(Vector3 axis,float angle);
+        T Rotate(params Rotation[] rotation);
 
     }
 }

@@ -5,11 +5,16 @@ namespace _3DNet.Math.Extensions
 {
     public static class NumericExtensions
     {
-        public static Vector3 ToVector3(this Quaternion q) => new Vector3(q.X, q.Y, q.Z);
+        public static Vector3 ToVector3(this Quaternion q) => new(q.X, q.Y, q.Z);
         public static Matrix4x4 ToMatrix4x4(this Quaternion q) => Matrix4x4.CreateFromQuaternion(q);
         public static Vector3 Normalize(this Vector3 v) => Vector3.Normalize(v);
         public static Quaternion Normalize(this Quaternion q) => Quaternion.Normalize(q);
         public static Vector3 Cross(this Vector3 v, Vector3 other) => Vector3.Cross(v, other);
+        public static Vector3 ClampEpsilon(this Vector3 vector3, float epsilon) =>
+             new(
+            vector3.X < epsilon && vector3.X > epsilon * -1 ? 0f : vector3.X,
+            vector3.Y < epsilon && vector3.Y > epsilon * -1 ? 0f : vector3.Y,
+            vector3.Z < epsilon && vector3.Z > epsilon * -1 ? 0f : vector3.Z);
 
         public static Vector3 ToEulerAngles(this Quaternion q)
         {

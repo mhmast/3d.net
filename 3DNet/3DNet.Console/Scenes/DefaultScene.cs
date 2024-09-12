@@ -21,7 +21,7 @@ internal class DefaultScene : ISceneImpl
     private IStandardSceneObject _cube6;
     private const float SensitivityFactor = 0.1f;
 
-    public DefaultScene(IModelFactory modelFactory, IInputFactory inputFactory,Game game)
+    public DefaultScene(IModelFactory modelFactory, IInputFactory inputFactory, Game game)
     {
         _modelFactory = modelFactory;
         _inputFactory = inputFactory;
@@ -51,41 +51,41 @@ internal class DefaultScene : ISceneImpl
     {
         _mouse.Update();
         _keyboard.Update();
-        if(_keyboard.IsButtonPressed(Key.Escape))
+        if (_keyboard.IsButtonPressed(Key.Escape))
         {
             _game.Stop();
             return;
         }
         var deltaY = _mouse.DeltaY * SensitivityFactor;
-        _cam.Rotate(_cam.Right,deltaY);
-        var deltaX = _mouse.DeltaX * SensitivityFactor * -1;
-        _cam.Rotate(_cam.Up, deltaX);
+        var deltaX = _mouse.DeltaX * SensitivityFactor;
+        _cam.Rotate(new Math.Rotation(new Vector3(1,0,0), deltaY), new Math.Rotation(new Vector3(0,1,0), deltaX));
+       
 
-        if(_keyboard.IsButtonPressed(Key.NumberPad1))
+        if (_keyboard.IsButtonPressed(Key.NumberPad1))
         {
             _cam.LookAt(_cube1);
         }
-        if(_keyboard.IsButtonPressed(Key.NumberPad2))
+        if (_keyboard.IsButtonPressed(Key.NumberPad2))
         {
             _cam.LookAt(_cube2);
         }
-        if(_keyboard.IsButtonPressed(Key.NumberPad3))
+        if (_keyboard.IsButtonPressed(Key.NumberPad3))
         {
             _cam.LookAt(_cube3);
         }
-        if(_keyboard.IsButtonPressed(Key.NumberPad4))
+        if (_keyboard.IsButtonPressed(Key.NumberPad4))
         {
             _cam.LookAt(_cube4);
         }
-        if(_keyboard.IsButtonPressed(Key.NumberPad5))
+        if (_keyboard.IsButtonPressed(Key.NumberPad5))
         {
             _cam.LookAt(_cube5);
         }
-        if(_keyboard.IsButtonPressed(Key.NumberPad6))
+        if (_keyboard.IsButtonPressed(Key.NumberPad6))
         {
             _cam.LookAt(_cube6);
         }
-        if(_keyboard.IsButtonPressed(Key.F))
+        if (_keyboard.IsButtonPressed(Key.F))
         {
             _game.ToggleFullScreen();
         }
